@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payment - Trang chủ & Cửa hàng</title>
+  <style>
+    :root{--glass:rgba(255,255,255,0.06);--bg1:#071126;--bg2:#09243b;--accent:#6ee7b7}
+    body{margin:0;font-family:Inter,system-ui;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#e6eef6;}
+    header{padding:20px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.25);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.08)}
+    .brand{display:flex;gap:12px;align-items:center;font-size:22px;font-weight:700}
+    .brand-logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#0ea5a5,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;}
+    nav a{color:#e6eef6;margin-left:16px;text-decoration:none;font-weight:500;}
+    nav a:hover{opacity:0.8}
+
+    .hero{padding:80px 20px;text-align:center;background:url('https://images.unsplash.com/photo-1551033541-2075d8363c67?auto=format&fit=crop&w=1400&q=60') center/cover no-repeat;position:relative;}
+    .hero::after{content:'';position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(2px)}
+    .hero-content{position:relative;z-index:2;}
+    .hero h1{font-size:48px;margin:0 0 20px;font-weight:800;text-shadow:0 4px 14px #000}
+    .hero p{font-size:20px;color:#d2d9e6;max-width:750px;margin:0 auto;line-height:1.6;text-shadow:0 2px 12px #000}
+
+    .section{padding:50px 20px;max-width:1100px;margin:auto;}
+    .card{background:var(--glass);border:1px solid rgba(255,255,255,0.05);padding:22px;border-radius:14px;box-shadow:0 6px 20px rgba(2,6,23,0.6);backdrop-filter:blur(6px);margin-bottom:24px;}
+    .card h2{margin-top:0;font-size:26px}
+    ul{margin-top:10px;line-height:1.7}
+    .contact-item{margin:6px 0;color:#c5d0df;font-size:15px}
+
+    /* SHOP SECTION */
+    #products{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+    .product{padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);min-height:140px;background:rgba(255,255,255,0.04)}
+    .product h3{margin:0 0 8px 0}
+    .meta{font-size:13px;color:#b8c6d6}
+    .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    button{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:inherit;cursor:pointer}
+    button.primary{background:linear-gradient(90deg,#10b981,#06b6d4);color:#012;font-weight:600}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.03);font-size:14px}
+
+    .modal-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center}
+    .modal{width:420px;max-width:94%;}
+
+    footer{text-align:center;padding:20px 0;color:#9fb0c8;margin-top:40px;border-top:1px solid rgba(255,255,255,0.05)}
+
+    @media (max-width:900px){#products{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:600px){#products{grid-template-columns:repeat(1,1fr)}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">PU</div>
+      <div>Payment</div>
+    </div>
+    <nav>
+      <a href="#home">Trang chủ</a>
+      <a href="#shop">Cửa hàng</a>
+    </nav>
+  </header>
+
+  <!-- HERO SECTION -->
+  <div class="hero" id="home">
+    <div class="hero-content">
+      <h1>Nền tảng bán mã & nạp tiền</h1>
+      <p>Giao diện hiện đại – vận hành ổn định – phù hợp đưa vào sử dụng thực tế.</p>
+    </div>
+  </div>
+
+  <!-- INTRO SECTION -->
+  <div class="section">
+    <div class="card">
+      <h2>Giới thiệu</h2>
+      <p>Hệ thống bán mã sản phẩm (SERi), nạp tiền, mua hàng, duyệt admin – tất cả tích hợp trong 1 file duy nhất, dễ triển khai và sử dụng.</p>
+    </div>
+
+    <div class="card">
+      <h2>Liên hệ</h2>
+      <p class="contact-item">📨 Telegram hỗ trợ: @Dung_tool_wallet</p>
+    </div>
+  </div>
+
+  <!-- SHOP SECTION -->
+  <div class="section" id="shop">
+    <div class="card">
+      <h2>Cửa hàng</h2>
+      <div class="muted">Số dư: <span id="balance">0</span> VND</div>
+      <div id="products"></div>
+
+      <div id="orderHistory" class="card" style="margin-top:18px;display:none">
+        <h3>Lịch sử đơn hàng</h3>
+        <table>
+          <thead><tr><th>Mã</th><th>Sản phẩm</th><th>Giá</th><th>SERi</th><th>Thời gian</th></tr></thead>
+          <tbody id="orderTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Nạp tiền</h2>
+      <p>STK: 123456789 - MB Bank</p>
+      <p>Nội dung: <b>TOPUP:&lt;email&gt;:&lt;số tiền&gt;</b></p>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <input id="topupEmail" placeholder="Email đã đăng ký" />
+        <input id="topupAmount" placeholder="Số tiền" />
+        <button id="btnTopupConfirm" class="primary">Tôi đã chuyển</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modalRoot" class="modal-backdrop"><div class="modal card" id="modalInner"></div></div>
+
+  <footer>© 2025 Payment – Hệ thống nạp tiền & bán mã.</footer>
+
+<script>
+// DỮ LIỆU SẢN PHẨM
+const PRODUCTS=[
+ {id:1,name:"Mã A",price:10000,desc:"Loại A"},
+ {id:2,name:"Mã B",price:20000,desc:"Loại B"},
+ {id:3,name:"Mã C",price:30000,desc:"Loại C"}
+];
+
+function safeText(t){return String(t==null?"":t)}
+
+function hashPassword(p){const e=new TextEncoder();return crypto.subtle.digest("SHA-256",e.encode(p)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join(""))}
+
+function getUsers(){return JSON.parse(localStorage.getItem("users")||"[]")}function saveUsers(u){localStorage.setItem("users",JSON.stringify(u))}
+function getCurrentEmail(){return localStorage.getItem("currentUser")}function setCurrentEmail(e){if(e)localStorage.setItem("currentUser",e);else localStorage.removeItem("currentUser")}
+function getUser(){const e=getCurrentEmail();if(!e)return null;return getUsers().find(u=>u.email===e)||null}
+function saveUser(u){const list=getUsers();let i=list.findIndex(x=>x.email===u.email);if(i===-1)list.push(u);else list[i]=u;saveUsers(list)}
+function formatVND(n){return Number(n).toLocaleString("vi-VN")}
+
+// RENDER PRODUCTS
+const productsRoot=document.getElementById("products");
+function renderProducts(){productsRoot.innerHTML="";PRODUCTS.forEach(p=>{
+ let box=document.createElement("div");box.className="product";
+ let h=document.createElement("h3");h.textContent=p.name;
+ let d=document.createElement("div");d.className="meta";d.textContent=p.desc;
+ let row=document.createElement("div");row.className="row";
+ let price=document.createElement("span");price.textContent=formatVND(p.price)+" VND";
+ let btn=document.createElement("button");btn.textContent="Mua";btn.onclick=()=>onBuy(p);
+ row.appendChild(price);row.appendChild(btn);
+ box.appendChild(h);box.appendChild(d);box.appendChild(row);
+ productsRoot.appendChild(box);
+})}
+
+function renderUserUI(){const u=getUser();document.getElementById("balance").textContent=u?formatVND(u.balance):"0";loadHistory()}
+
+// HISTORY
+function loadHistory(){const u=getUser();const box=document.getElementById("orderHistory");const tbody=document.getElementById("orderTableBody");tbody.innerHTML="";
+ if(!u||!u.orders||u.orders.length===0){box.style.display="none";return}
+ u.orders.forEach(o=>{let tr=document.createElement("tr");[o.id,o
