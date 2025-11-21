@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iBYPASS SHOP - Bypass iCloud Giá Rẻ</title>
+<style>
+  :root{--pri:#00ff9d;--bg:#0a0a0f;--card:#111118;--warn:#ff6b6b}
+  body{margin:0;font-family:Segoe UI,sans-serif;background:var(--bg);color:#e0e7ff;min-height:100vh}
+  header{position:sticky;top:0;z-index:99;background:rgba(10,10,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid #333;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+  .logo{font-size:28px;font-weight:900;background:linear-gradient(90deg,#00ff9d,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  nav a{color:#e0e7ff;text-decoration:none;padding:10px 18px;border-radius:10px}
+  nav a:hover{background:rgba(0,255,157,0.15)}
+  .btn{background:linear-gradient(90deg,#00ff9d,#00d4ff);color:#000;padding:12px 24px;border-radius:12px;font-weight:700;cursor:pointer}
+  .container{max-width:1100px;margin:0 auto;padding:20px}
+  .card{background:var(--card);border:1px solid rgba(0,255,157,0.2);border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:0 10px 40px #0006}
+  #products{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-top:20px}
+  .product{background:rgba(0,255,157,0.05);border:1px solid rgba(0,255,157,0.3);border-radius:16px;padding:24px;text-align:center;transition:.3s}
+  .product:hover{transform:translateY(-8px);box-shadow:0 15px 30px rgba(0,255,157,0.2)}
+  .product h3{font-size:20px;margin:0 0 12px;color:#00ff9d}
+  .price{font-size:32px;font-weight:900;margin:16px 0;color:#00ff9d}
+  .btn-buy{width:100%;padding:16px;font-size:18px}
+  .warning{background:#300;border:2px solid var(--warn);padding:20px;border-radius:16px}
+  .status-pending{background:#ffaa0044;color:#ffaa00;padding:4px 10px;border-radius:8px;font-size:13px}
+  .status-success{background:#00ff9d44;color:#00ff9d;padding:4px 10px;border-radius:8px;font-size:13px}
+  .status-refunded{background:#ff6b6b44;color:#ff6b6b;padding:4px 10px;border-radius:8px;font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-top:20px}
+  th,td{padding:12px;border-bottom:1px solid #333;text-align:left}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:999}
+  .modal{max-width:500px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri)}
+</style>
+</head>
+<body>
+
+<header>
+  <div><span class="logo">iBYPASS</span> SHOP</div>
+  <nav>
+    <a href="index.html">Trang chủ</a>
+    <a href="dashboard.html">Cửa hàng</a>
+    <span id="status" style="color:#00ff9d;font-weight:600">Chưa đăng nhập</span>
+    <button class="btn" id="adminBtn">Admin</button>
+  </nav>
+</header>
+
+<div class="container">
+  <div class="card" style="text-align:center">
+    <h1 style="color:#00ff9d;font-size:36px;margin:0">Số dư: <span id="balance">0</span> VND</h1>
+  </div>
+
+  <div class="card warning">
+    <h2 style="color:var(--warn)">LƯU Ý CHUNG (BẮT BUỘC ĐỌC)</h2>
+    <ul style="color:#ffaa00;line-height:2;font-size:16px">
+      <li>Tất cả dịch vụ đều KHÔNG CÓ SÓNG – chỉ dùng WiFi</li>
+      <li>Không hủy đơn, nhưng có hoàn tiền nếu lỗi source quá 48h</li>
+      <li>Tháo SIM + kết nối WiFi mạnh trước khi bypass</li>
+    </ul>
+  </div>
+
+  <div id="products"></div>
+
+  <div class="card">
+    <h2>Nạp tiền 24/7</h2>
+    <p>STK: <strong>0372917568</strong> – MB Bank – <strong>NGUYEN VAN A</strong> (sửa lại của bạn)</p>
+    <p>Nội dung chuyển khoản: <code style="color:#00ff9d">BYPASS email@gmail.com 100000</code></p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+      <input id="topupEmail" placeholder="Email của bạn">
+      <input id="topupAmount" type="number" placeholder="Số tiền">
+      <button class="btn" id="topupBtn">Tôi đã chuyển</button>
+    </div>
+  </div>
+
+  <div class="card" id="history" style="display:none">
+    <h2>Lịch sử đơn hàng của bạn</h2>
+    <table><thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Giá</th><th>Seri</th><th>Trạng thái</th><th>Thời gian</th></tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+</div>
+
+<div id="modalRoot" class="modal-backdrop"><div class="modal" id="modalInner"></div></div>
+
+<script>
+const PRODUCTS=[
+  {id:1,name:"Nothing PRO Bypass iPhone 11 → 17 Pro Max",price:120000,desc:"iOS 18.6–26.1 • Full iCloud, Notification, FaceTime"},
+  {id:2,name:"HFZ Activator A12+ Premium Bypass",price:120000,desc:"All iPhone/iPad • Full Notification, FaceTime"},
+  {id:3,name:"iRemove Tool A12+ Instant API",price:160000,desc:"iOS 18.6–26.1 • Mac & Win • Instant"},
+  {id:4,name:"Mina A12–M4 Bypass No Signal",price:210000,desc:"iOS 18.6–26.0.1 • All iPhone/iPad A12–M4"},
+  {id:5,name:"FRPFILE Activator A12+ Hello Screen",price:90000,desc:"iPhone XR–17 Pro Max & iPad A12–M3"}
+];
+
+function $(s){return document.querySelector(s)}
+function get(k){return JSON.parse(localStorage.getItem(k)||'[]')}
+function set(k,v){localStorage.setItem(k,JSON.stringify(v))}
+
+function render(){
+  $('#products').innerHTML=''; PRODUCTS.forEach(p=>{
+    $('#products').innerHTML+=`<div class="product">
+      <h3>${p.name}</h3><p>${p.desc}</p>
+      <div class="price">${p.price.toLocaleString()}₫</div>
+      <button class="btn btn-buy" onclick="buy(${p.id})">MUA NGAY</button>
+    </div>`;
+  });
+  const userEmail=localStorage.getItem('user');
+  const users=get('users');
+  const u=users.find(x=>x.email===userEmail);
+  $('#balance').textContent=u?(u.balance||0).toLocaleString():'0';
+  $('#status').textContent=u?(u.email+(u.isAdmin?' (Admin)':'')):'Chưa đăng nhập';
+  $('#status').style.color=u?.isAdmin?'#ff0066':'#00ff9d';
+
+  // Lịch sử khách
+  if(u&&u.orders?.length){$('#history').style.display='block'; $('#tbody').innerHTML='';
+    u.orders.forEach(o=>{
+      const status=o.status==='success'?`<span class="status-success">DONE</span>`:o.status==='refunded'?`<span class="status-refunded">ĐÃ HOÀN</span>`:`<span class="status-pending">PENDING</span>`;
+      $('#tbody').innerHTML+=`<tr><td>${o.id}</td><td>${o.name}</td><td>${o.price.toLocaleString()}</td><td><code>${o.seri}</code></td><td>${status}</td><td>${o.date}</td></tr>`;
+    });
+  } else $('#history').style.display='none';
+}
+render(); setInterval(render,3000);
+
+// Mua hàng → nhập seri → pending
+window.buy=id=>{
+  const p=PRODUCTS.find(x=>x.id===id);
+  const userEmail=localStorage.getItem('user');
+  if(!userEmail){alert('Vui lòng đăng nhập trước'); login(); return;}
+  const users=get('users');
+  const u=users.find(x=>x.email===userEmail);
+  if((u.balance||0)<p.price){alert('Không đủ tiền! Nạp thêm nhé');return;}
+  $('#modalInner').innerHTML=`<h3 style="color:#00ff9d">Mua ${p.name} – ${p.price.toLocaleString()}₫</h3>
+    <input id="seri" placeholder="Nhập Serial Number (SN)" style="width:100%;padding:14px;margin:12px 0;border-radius:12px;background:#000;color:#fff;border:1px solid #333">
+    <button class="btn" onclick="order(${id},'${p.name}',${p.price})">Gửi đơn hàng</button>
+    <button class="btn" style="background:#666;margin-left:8px" onclick="$('#modalRoot').style.display='none'">Hủy</button>`;
+  $('#modalRoot').style.display='flex';
+}
+window.order=(id,name,price)=>{
+  const seri=$('#seri').value.trim();
+  if(!seri){alert('Nhập SN đi bạn ơi');return;}
+  let users=get('users');
+  const userEmail=localStorage.getItem('user');
+  const u=users.find(x=>x.email===userEmail);
+  u.balance-=price;
+  u.orders=u.orders||[];
+  u.orders.unshift({id:'ORD'+Date.now(),name,price,seri,status:'pending',date:new Date().toLocaleString('vi-VN')});
+  set('users',users);
+  let pending=get('pendingOrders')||[];
+  pending.push({orderId:u.orders[0].id,email:userEmail,seri,name,price,date:u.orders[0].date});
+  set('pendingOrders',pending);
+  render(); $('#modalRoot').style.display='none';
+  alert('Đơn hàng đã được gửi! Chờ admin xử lý trong vài phút');
+}
+
+// Nạp tiền pending
+$('#topupBtn').onclick=()=>{
+  const e=$('#topupEmail').value.trim(), a=$('#topupAmount').value;
+  if(!e||!a||a<10000){alert('Kiểm tra lại email và số tiền');return;}
+  let pend=get('pendingTopup')||[];
+  pend.push({id:'TP'+Date.now(),email:e,amount:Number(a),date:new Date().toLocaleString()});
+  set('pendingTopup',pend);
+  alert('Yêu cầu nạp đã gửi! Chờ admin duyệt');
+  $('#topupAmount').value='';
+}
+
+// Admin panel – mật khẩu 8888
+$('#adminBtn').onclick=()=>{
+  $('#modalInner').innerHTML=`<h3 style="color:#ff0066">ADMIN PANEL</h3>
+    <input type="password" id="adminPass" placeholder="Mật khẩu admin">
+    <button class="btn" style="background:#ff0066" onclick="openAdmin()">Mở</button>`;
+  $('#modalRoot').style.display='flex';
+}
+window.openAdmin=()=>{
+  if($('#adminPass').value!=='8888'){alert('Sai mật khẩu');return;}
+  const pending=get('pendingOrders')||[];
+  const topup=get('pendingTopup')||[];
+  let html=`<h3 style="color:#00ff9d">ĐƠN HÀNG CHỜ XỬ LÝ (${pending.length})</h3>`;
+  pending.forEach(o=>{
+    html+=`<div style="background:#111;padding:12px;margin:8px 0;border-radius:12px;border-left:4px solid #ffaa00">
+      <b>${o.email}</b> – ${o.name} – ${o.price.toLocaleString()}₫ – SN: <code>${o.seri}</code><br>${o.date}
+      <button class="btn" style="background:#00ff9d;color:#000;margin:8px 4px 0 0" onclick="done('${o.orderId}','${o.email}')">Success</button>
+      <button class="btn" style="background:#ff0066" onclick="refund('${o.orderId}','${o.email}',${o.price})">Refund</button>
+    </div>`;
+  });
+  html+=`<h3 style="color:#00d4ff;margin-top:20px">NẠP TIỀN CHỜ DUYỆT (${topup.length})</h3>`;
+  topup.forEach(t=>{
+    html+=`<div style="background:#111;padding:12px;margin:8px 0;border-radius:12px;border-left:4px solid #00d4ff">
+      ${t.email} – ${t.amount.toLocaleString()}₫ – ${t.date}
+      <button class="btn" style="background:#00ff9d;color:#000;margin:8px 4px 0 0" onclick="approveTopup('${t.id}','${t.email}',${t.amount})">Duyệt</button>
+    </div>`;
+  });
+  $('#modalInner').innerHTML=html;
+}
+window.done=(orderId,email)=>{
+  let users=get('users'); let u=users.find(x=>x.email===email);
+  u.orders.find(x=>x.id===orderId).status='success';
+  set('users',users);
+  set('pendingOrders',get('pendingOrders').filter(x=>x.orderId!==orderId));
+  render(); alert('Đã đánh dấu DONE');
+}
+window.refund=(orderId,email,price)=>{
+  if(!confirm('Hoàn tiền cho đơn này?'))return;
+  let users=get('users'); let u=users.find(x=>x.email===email);
+  u.balance+=price; u.orders.find(x=>x.id===orderId).status='refunded';
+  set('users',users);
+  set('pendingOrders',get('pendingOrders').filter(x=>x.orderId!==orderId));
+  render(); alert('Đã hoàn tiền thành công');
+}
+window.approveTopup=(id,email,amount)=>{
+  let users=get('users'); let u=users.find(x=>x.email===email);
+  if(u){u.balance=(u.balance||0)+amount; set('users',users);}
+  set('pendingTopup',get('pendingTopup').filter(x=>x.id!==id));
+  render(); alert('Đã duyệt nạp tiền');
+}
+
+// Đăng nhập / đăng ký (giữ nguyên như cũ, rút gọn)
+function login(){/* code auth ngắn gọn – bạn giữ nguyên như file cũ là được */}
+</script>
+</body>
+</html>
