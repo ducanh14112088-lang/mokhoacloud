@@ -86,6 +86,13 @@
 <div id="modalRoot" class="modal-backdrop"><div class="modal" id="modalInner"></div></div>
 
 <script>
+// ----------------------------------------------------
+// THÊM BIẾN THEO DÕI ĐỂ GIẢ LẬP THÔNG BÁO CHO ADMIN
+// (Giá trị này sẽ được cập nhật trong updateUI)
+let lastPendingOrdersCount = 0; 
+let lastPendingTopupCount = 0;
+// ----------------------------------------------------
+
 const PRODUCTS = [
   {id:1,name:"Nothing PRO Bypass iPhone 11 → 17 Pro Max",price:120000,desc:"iOS 18.6–26.1 • Full iCloud, Notification, FaceTime • Windows Tool"},
   {id:2,name:"HFZ Activator A12+ Premium Bypass",price:120000,desc:"All iPhone/iPad • Full Notification, FaceTime • Windows"},
@@ -98,6 +105,9 @@ function $(s){return document.querySelector(s)}
 function get(k){return JSON.parse(localStorage.getItem(k)||'[]')}
 function set(k,v){localStorage.setItem(k,JSON.stringify(v))}
 
+// HÀM LƯU USERS (Quan trọng cho admin)
+function saveUsers(u){localStorage.setItem('users',JSON.stringify(u))}
+
 function currentUser(){const e=localStorage.getItem('user');return e?get('users').find(u=>u.email===e):null}
 
 function updateUI(){
@@ -107,7 +117,9 @@ function updateUI(){
   $('#authBtn').textContent = u ? 'Đăng xuất' : 'Đăng nhập';
   $('#emailShow').textContent = u ? u.email : 'Đăng nhập để xem';
   $('#topupEmail').value = u ? u.email : '';
-  $('#topupBtn').disabled = !u;
+  
+  // FIX: Nút Nạp tiền chỉ mở nếu đã đăng nhập VÀ đã điền email (để đảm bảo nội dung CK đúng)
+  $('#topupBtn').disabled = !u || !$('#topupEmail').value; 
   $('#adminPanel').style.display = u?.isAdmin ? 'block' : 'none';
 
   // Render sản phẩm
@@ -142,6 +154,18 @@ function updateUI(){
   if (u?.isAdmin) {
     const pendingOrders = get('pendingOrders') || [];
     const pendingTopups = get('pendingTopup') || [];
+
+    // --- LOGIC GIẢ LẬP THÔNG BÁO NẠP TIỀN MỚI ---
+    if (pendingTopups.length > lastPendingTopupCount && lastPendingTopupCount !== 0) {
+        // Chỉ thông báo nếu có sự gia tăng, và không phải lần load đầu tiên
+        const newCount = pendingTopups.length - lastPendingTopupCount;
+        alert(`🔔 YÊU CẦU NẠP MỚI! Có ${newCount} đơn chờ duyệt.`);
+    }
+    // Cập nhật biến đếm sau khi kiểm tra để lần sau so sánh
+    lastPendingTopupCount = pendingTopups.length;
+    // ----------------------------------------------------
+    
+    // Đơn hàng chờ xử lý
     let html = '<h3 style="color:#ffaa00">Đơn hàng chờ xử lý (' + pendingOrders.length + ')</h3>';
     pendingOrders.forEach(o => {
       html += `<div class="admin-item">
@@ -152,6 +176,7 @@ function updateUI(){
     });
     $('#adminOrders').innerHTML = html;
 
+    // Nạp tiền chờ duyệt
     html = '<h3 style="color:#00d4ff;margin-top:30px">Nạp tiền chờ duyệt (' + pendingTopups.length + ')</h3>';
     pendingTopups.forEach(t => {
       html += `<div class="admin-item admin-topup">
@@ -191,7 +216,8 @@ window.confirmBuy = (id, name, price) => {
   pending.push({orderId, email: u.email, seri, product: name, price, date: new Date().toLocaleString('vi-VN')});
   set('pendingOrders', pending);
 
-  updateUI();
+  // Cập nhật UI trước khi alert để người dùng thấy số dư thay đổi
+  updateUI(); 
   closeModal();
   alert('Đơn hàng đã gửi! Chờ admin xử lý trong vài phút.');
 };
@@ -199,10 +225,18 @@ window.confirmBuy = (id, name, price) => {
 // Nạp tiền
 $('#topupBtn').onclick = () => {
   const amount = parseInt($('#topupAmount').value);
+  const email = $('#topupEmail').value.trim(); // Thêm kiểm tra email
+  
+  if (!email) { alert('Vui lòng đăng nhập và đảm bảo email hiển thị để làm nội dung chuyển khoản!'); return; }
   if (isNaN(amount) || amount < 10000) { alert('Số tiền tối thiểu 10k'); return; }
+  
   let pending = get('pendingTopup') || [];
   pending.push({id: 'TP' + Date.now(), email: currentUser().email, amount, date: new Date().toLocaleString('vi-VN')});
   set('pendingTopup', pending);
+  
+  // Tăng biến đếm giả lập ngay sau khi tạo đơn
+  lastPendingTopupCount = pending.length; 
+  
   alert('Yêu cầu nạp đã gửi! Chờ admin duyệt trong 1–5 phút.');
   $('#topupAmount').value = '';
 };
@@ -237,12 +271,27 @@ window.adminApproveTopup = (id, email, amount) => {
   if (u) u.balance = (u.balance || 0) + amount;
   saveUsers(users);
   set('pendingTopup', get('pendingTopup').filter(x => x.id !== id));
+  
+  // Giảm biến đếm giả lập ngay sau khi duyệt
+  lastPendingTopupCount = get('pendingTopup').length; 
+  
   updateUI();
   alert('Đã duyệt nạp ' + amount.toLocaleString() + '₫!');
 };
 
-// Auth buttons (copy từ index.html để độc lập)
-$('#authBtn').onclick = () => { location.href = 'index.html'; };
+// Auth buttons
+$('#authBtn').onclick = () => { 
+    if (currentUser()) {
+        if (confirm('Đăng xuất?')) {
+            localStorage.removeItem('user');
+            updateUI();
+            // Nếu admin đang ở dashboard, quay về index.html sau logout
+            location.href = 'index.html'; 
+        }
+    } else {
+        location.href = 'index.html'; 
+    }
+};
 
 // Modal functions
 function closeModal() { $('#modalRoot').style.display = 'none'; }
