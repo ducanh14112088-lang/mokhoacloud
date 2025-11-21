@@ -2,8 +2,7 @@
 <html lang="vi"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>iBYPASS SHOP - Bypass iCloud Giá Rẻ Nhất 2025</title>
-<meta name="description" content="Bypass iCloud iPhone 11 → 17 Pro Max, iPad A12–M4, iOS 18–26 giá chỉ từ 90k">
+<title>iBYPASS SHOP - Bypass iCloud Giá Rẻ 2025</title>
 <style>
   :root{--pri:#00ff9d;--bg:#0a0a0f;--card:#111118}
   body{margin:0;font-family:Segoe UI,sans-serif;background:var(--bg);color:#e0e7ff;min-height:100vh;background:radial-gradient(circle at top,rgba(0,255,157,0.08),#0a0a0f)}
@@ -15,11 +14,12 @@
   .hero{text-align:center;padding:120px 20px;background:url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0') center/cover;position:relative}
   .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(45deg,rgba(10,10,15,0.9),rgba(0,0,0,0.6))}
   .hero h1{font-size:58px;margin:0;background:linear-gradient(90deg,#00ff9d,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-  .hero p{font-size:21px;max-width:900px;margin:25px auto 40px;line-height:1.7}
   .section{max-width:1100px;margin:0 auto;padding:80px 20px}
   .card{background:var(--card);border:1px solid rgba(0,255,157,0.2);border-radius:18px;padding:35px;text-align:center;box-shadow:0 10px 40px #0006}
-  .contact{font-size:20px;margin:20px 0;background:rgba(0,255,157,0.1);padding:16px;border-radius:12px}
-  footer{text-align:center;padding:40px;color:#666;font-size:14px}
+  .important{background:#300;border:2px solid #ff6b6b;padding:20px;border-radius:16px;margin:20px 0}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:999}
+  .modal{max-width:420px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri);text-align:center}
+  input{width:100%;padding:14px;margin:10px 0;border-radius:12px;border:1px solid #333;background:#000;color:#fff;font-size:16px}
 </style>
 </head><body>
 
@@ -29,45 +29,94 @@
     <a href="index.html">Trang chủ</a>
     <a href="dashboard.html">Cửa hàng</a>
     <span id="status" style="color:#00ff9d;font-weight:600">Chưa đăng nhập</span>
-    <a href="dashboard.html" class="btn">Vào mua ngay</a>
+    <button class="btn" id="authBtn">Đăng nhập</button>
+    <button class="btn" id="adminBtn" style="display:none;background:#ff0066">ADMIN PANEL</button>
   </nav>
 </header>
 
 <div class="hero">
   <div style="position:relative;z-index:2">
     <h1>iCLOUD BYPASS GIÁ RẺ NHẤT 2025</h1>
-    <p>iPhone 11 → 17 Pro Max • iPad A12–M4 • iOS 18.6–26.1<br>Chỉ từ <b>90.000₫</b> • Full thông báo, FaceTime, iMessage • Xử lý nhanh trong 5–30 phút</p>
-    <a href="dashboard.html" class="btn" style="padding:18px 50px;font-size:22px">MUA NGAY CHỈ TỪ 90K</a>
+    <p>iPhone 11 → 17 Pro Max • iPad A12–M4 • iOS 18.6–26.1<br>Chỉ từ <b>90.000₫</b> • Full thông báo, FaceTime • Xử lý 5–30 phút</p>
+    <a href="dashboard.html" class="btn" style="padding:18px 50px;font-size:22px">MUA NGAY TỪ 90K</a>
   </div>
 </div>
 
 <div class="section">
   <div class="card">
-    <h2 style="color:#00ff9d;font-size:28px;margin-top:0">Liên hệ & Hỗ trợ 24/7</h2>
-    <div class="contact">
-      <strong>Telegram:</strong> <a href="https://t.me/dung_tool_wallet" target="_blank" style="color:#00ff9d;font-size:22px">@dung_tool_wallet</a>
+    <h2 style="color:#00ff9d">Thông tin chuyển khoản</h2>
+    <div style="background:rgba(0,212,255,0.1);padding:20px;border-radius:12px;font-size:20px">
+      STK: <span style="color:#00ff9d;font-size:26px">1404123456</span><br>
+      MB Bank – NGUYEN DUC ANH
     </div>
-    <div class="contact" style="margin-top:25px;background:rgba(0,212,255,0.1)">
-      <strong>Ngân hàng nhận tiền:</strong><br>
-      <span style="font-size:22px;color:#00ff9d">1404123456</span> – MB Bank – <strong>NGUYEN DUC ANH</strong>
+    <div class="important">
+      <h3 style="color:#ff6b6b;margin:0">BẮT BUỘC ghi nội dung chuyển khoản:</h3>
+      <code style="font-size:24px;color:#00ff9d;background:#000;padding:10px 20px;border-radius:12px" id="noidung">Đăng nhập để xem</code>
+      <p style="margin:10px 0 0;color:#ffaa00">Tiền sẽ được cộng tự động trong <b>1–5 phút</b> sau khi chuyển đúng nội dung</p>
+    </div>
+    <div style="margin-top:25px;padding:16px;background:rgba(0,255,157,0.1);border-radius:12px">
+      <strong>Telegram hỗ trợ 24/7:</strong><br>
+      <a href="https://t.me/dung_tool_wallet" target="_blank" style="color:#00ff9d;font-size:24px">@dung_tool_wallet</a>
     </div>
   </div>
 </div>
 
-<footer>
-  © 2025 iBYPASS SHOP – Bypass iCloud Không Sóng Giá Rẻ & Uy Tín Nhất Việt Nam
-</footer>
+<!-- Modal đăng nhập / đăng ký -->
+<div id="authModal" class="modal-backdrop"><div class="modal" id="authInner"></div></div>
 
 <script>
-function updateStatus(){
-  const s=document.getElementById('status');
-  const e=localStorage.getItem('user');
-  if(e){
-    const u=JSON.parse(localStorage.getItem('users')||'[]').find(x=>x.email===e);
-    s.textContent = u ? (u.email + (u.isAdmin?' (Admin)':'')) : 'Chưa đăng nhập';
-    s.style.color = u?.isAdmin ? '#ff0066' : '#00ff9d';
-  }else s.textContent='Chưa đăng nhập';
+async function hash(p){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(p)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''))}
+function get(k){return JSON.parse(localStorage.getItem(k)||'[]')}
+function set(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function user(){return localStorage.getItem('user')?get('users').find(x=>x.email===localStorage.getItem('user')):null}
+
+function updateUI(){
+  const u=user();
+  $('#status').textContent=u?(u.email+(u.email==='998822jj'?' (Admin)':'')):'Chưa đăng nhập';
+  $('#status').style.color=u?(u.email==='998822jj'?'#ff0066':'#00ff9d'):'#aaa';
+  $('#authBtn').textContent=u?'Đăng xuất':'Đăng nhập';
+  $('#adminBtn').style.display=(u&&u.email==='998822jj')?'inline-block':'none';
+  $('#noidung').textContent=u?u.email:'Đăng nhập để xem';
 }
-updateStatus(); setInterval(updateStatus,2000);
+function $(s){return document.querySelector(s)}
+
+$('#authBtn').onclick=()=>{if(user()){if(confirm('Đăng xuất?')){localStorage.removeItem('user');updateUI()}return}
+  $('#authInner').innerHTML=`<h2 style="color:#00ff9d">Đăng nhập / Đăng ký</h2>
+    <input type="email" id="e" placeholder="Email"><input type="password" id="p1" placeholder="Mật khẩu">
+    <input type="password" id="p2" placeholder="Nhập lại mật khẩu (khi đăng ký)" style="display:none">
+    <div style="margin-top:20px"><button class="btn" onclick="login()">Đăng nhập</button>
+    <button class="btn" style="background:#0066ff" onclick="regMode()">Đăng ký</button>
+    <button class="btn" style="background:#666" onclick="$('#authModal').style.display='none'">Hủy</button></div>
+    <p id="msg" style="color:#ff6b6b;margin-top:10px"></p>`;
+  $('#authModal').style.display='flex';
+}
+window.regMode=()=>{document.getElementById('p2').style.display='block';document.getElementById('msg').textContent='Nhập lại mật khẩu để đăng ký';}
+window.login=async()=>{
+  const e=$('#e').value.trim(),p=$('#p1').value,p2=$('#p2').value||p;
+  if(!e||!p){$('#msg').textContent='Nhập đầy đủ';return;}
+  let users=get('users');
+  const exist=users.find(x=>x.email===e);
+  if(!exist){$('#msg').textContent='Email chưa đăng ký';return;}
+  if(await hash(p)!==exist.pass){$('#msg').textContent='Sai mật khẩu';return;}
+  localStorage.setItem('user',e);updateUI();$('#authModal').style.display='none';
+}
+$('#authInner')?.addEventListener('keyup',async e=>{if(e.key==='Enter'&&document.getElementById('p2').style.display==='block'){
+  const e=$('#e').value.trim(),p1=$('#p1').value,p2=$('#p2').value;
+  if(p1!==p2){$('#msg').textContent='Mật khẩu không khớp';return;}
+  let users=get('users');
+  if(users.some(x=>x.email===e)){$('#msg').textContent='Email đã tồn tại';return;}
+  const h=await hash(p1);
+  users.push({email:e,pass:h,balance:0,orders:[],isAdmin:e==='998822jj'});
+  set('users',users);localStorage.setItem('user',e);updateUI();$('#authModal').style.display='none';
+  alert('Đăng ký thành công!');
+}});
+
+// Tạo tài khoản admin mặc định
+if(!get('users').some(x=>x.email==='998822jj')){
+  hash('yeugame22').then(h=>{set('users',[...get('users'),{email:'998822jj',pass:h,balance:999999999,orders:[],isAdmin:true}])});
+}
+
+$('#adminBtn').onclick=()=>{location.href='dashboard.html#admin';}
+updateUI(); setInterval(updateUI,2000);
 </script>
 </body></html>
