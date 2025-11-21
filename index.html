@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>iBYPASS SHOP - Bypass iCloud Giá Rẻ Nhất 2025</title>
+  <title>iBYPASS SHOP - Bypass iCloud Giá Rẻ 2025</title>
   <style>
     :root{--pri:#00ff9d;--bg:#0a0a0f;--card:#111118}
     body{margin:0;font-family:Segoe UI,sans-serif;background:var(--bg);color:#e0e7ff;min-height:100vh;background:radial-gradient(circle at top,rgba(0,255,157,0.08),#0a0a0f)}
@@ -22,7 +22,8 @@
     .modal{max-width:420px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri);text-align:center}
     input{width:100%;padding:14px;margin:10px 0;border-radius:12px;border:1px solid #333;background:#000;color:#fff;font-size:16px}
   </style>
-</head><body>
+</head>
+<body>
 
 <header>
   <div><span class="logo">iBYPASS</span> SHOP</div>
@@ -61,138 +62,112 @@
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Modal Đăng nhập / Đăng ký -->
 <div id="authModal" class="modal-backdrop">
   <div class="modal">
     <h2 style="color:#00ff9d;margin-top:0">Đăng nhập / Đăng ký</h2>
     <input type="email" id="email" placeholder="Email của bạn">
     <input type="password" id="pass1" placeholder="Mật khẩu">
-    <input type="password" id="pass2" placeholder="Nhập lại mật khẩu (khi đăng ký)" style="display:none">
-    <div style="margin:20px 0;display:flex;gap:12px;justify-content:center">
+    <input type="password" id="pass2" placeholder="Nhập lại mật khẩu" style="display:none">
+
+    <div style="margin:20px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
       <button class="btn" id="btnLogin">Đăng nhập</button>
       <button class="btn" id="btnSignup" style="background:#0066ff">Đăng ký</button>
-      <button class="btn" style="background:#666" onclick="closeModal()">Hủy</button>
+      <button class="btn" id="btnCompleteSignup" style="display:none;background:#ff0066">HOÀN TẤT ĐĂNG KÝ</button>
+      <button class="btn" style="background:#666" onclick="closeAuth()">Hủy</button>
     </div>
-    <p id="msg" style="color:#ff6b6b;height:24px;margin:10px 0"></p>
+    <p id="msg" style="color:#ff6b6b;height:30px;margin:10px 0"></p>
   </div>
 </div>
 
 <script>
-// Fix lỗi – code đầy đủ
-async function hash(p) {
+async function hash(p){
   const data = new TextEncoder().encode(p);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function getUsers(){return JSON.parse(localStorage.getItem('users')||'[]')}
+function saveUsers(u){localStorage.setItem('users',JSON.stringify(u))}
+
+function currentUser(){
+  const e = localStorage.getItem('user');
+  return e ? getUsers().find(x=>x.email===e) : null;
 }
 
-function getUsers() { return JSON.parse(localStorage.getItem('users') || '[]'); }
-function saveUsers(users) { localStorage.setItem('users', JSON.stringify(users)); }
-
-function currentUser() {
-  const email = localStorage.getItem('user');
-  if (!email) return null;
-  return getUsers().find(u => u.email === email);
-}
-
-function updateUI() {
+function updateUI(){
   const u = currentUser();
-  const status = document.getElementById('status');
-  const authBtn = document.getElementById('authBtn');
-  const adminBtn = document.getElementById('adminBtn');
-  const noidung = document.getElementById('noidung');
-
-  if (u) {
-    status.textContent = u.email + (u.email === '998822jj' ? ' (Admin)' : '');
-    status.style.color = u.email === '998822jj' ? '#ff0066' : '#00ff9d';
-    authBtn.textContent = 'Đăng xuất';
-    adminBtn.style.display = u.email === '998822jj' ? 'inline-block' : 'none';
-    noidung.textContent = u.email;
-  } else {
-    status.textContent = 'Chưa đăng nhập';
-    status.style.color = '#aaa';
-    authBtn.textContent = 'Đăng nhập';
-    adminBtn.style.display = 'none';
-    noidung.textContent = 'Đăng nhập để xem';
-  }
+  document.getElementById('status').textContent = u ? u.email + (u.email==='998822jj'?' (Admin)':'') : 'Chưa đăng nhập';
+  document.getElementById('status').style.color = u?.email==='998822jj'?'#ff0066':'#00ff9d';
+  document.getElementById('authBtn').textContent = u?'Đăng xuất':'Đăng nhập';
+  document.getElementById('adminBtn').style.display = u?.email==='998822jj'?'inline-block':'none';
+  document.getElementById('noidung').textContent = u?u.email:'Đăng nhập để xem';
 }
-
-function closeModal() { document.getElementById('authModal').style.display = 'none'; }
 
 // Tạo admin mặc định
-if (getUsers().length === 0) {
-  hash('yeugame22').then(h => {
-    saveUsers([{email: '998822jj', pass: h, balance: 999999999, orders: [], isAdmin: true}]);
-  });
+if(getUsers().length===0){
+  hash('yeugame22').then(h=>saveUsers([{email:'998822jj',pass:h,balance:999999999,orders:[],isAdmin:true}]));
 }
 
-// Nút auth
-document.getElementById('authBtn').onclick = () => {
-  const u = currentUser();
-  if (u) {
-    if (confirm('Đăng xuất?')) {
-      localStorage.removeItem('user');
-      updateUI();
-    }
+function closeAuth(){document.getElementById('authModal').style.display='none';}
+
+// Mở modal
+document.getElementById('authBtn').onclick=()=>{
+  if(currentUser()){
+    if(confirm('Đăng xuất?')){localStorage.removeItem('user');updateUI();}
     return;
   }
-  document.getElementById('authModal').style.display = 'flex';
-  document.getElementById('pass2').style.display = 'none';
-  document.getElementById('msg').textContent = '';
+  document.getElementById('authModal').style.display='flex';
+  document.getElementById('pass2').style.display='none';
+  document.getElementById('btnSignup').style.display='inline-block';
+  document.getElementById('btnCompleteSignup').style.display='none';
+  document.getElementById('msg').textContent='';
 };
 
 // Đăng nhập
-document.getElementById('btnLogin').onclick = async () => {
-  const email = document.getElementById('email').value.trim();
-  const pass = document.getElementById('pass1').value;
-  const msg = document.getElementById('msg');
-  if (!email || !pass) { msg.textContent = 'Nhập đầy đủ'; return; }
-
-  const users = getUsers();
-  const user = users.find(u => u.email === email);
-  if (!user) { msg.textContent = 'Email chưa đăng ký'; return; }
-  if (await hash(pass) !== user.pass) { msg.textContent = 'Sai mật khẩu'; return; }
-
-  localStorage.setItem('user', email);
-  updateUI();
-  closeModal();
-  alert('Đăng nhập thành công!');
+document.getElementById('btnLogin').onclick=async()=>{
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('pass1').value;
+  const msg=document.getElementById('msg');
+  if(!email||!pass){msg.textContent='Nhập đầy đủ';return;}
+  const user=getUsers().find(x=>x.email===email);
+  if(!user){msg.textContent='Email chưa đăng ký';return;}
+  if(await hash(pass)!==user.pass){msg.textContent='Sai mật khẩu';return;}
+  localStorage.setItem('user',email);
+  updateUI(); closeAuth(); alert('Đăng nhập thành công!');
 };
 
-// Chế độ đăng ký
-document.getElementById('btnSignup').onclick = () => {
-  document.getElementById('pass2').style.display = 'block';
-  document.getElementById('msg').textContent = 'Nhập lại mật khẩu để hoàn tất';
+// Chuyển sang chế độ đăng ký
+document.getElementById('btnSignup').onclick=()=>{
+  document.getElementById('pass2').style.display='block';
+  document.getElementById('btnSignup').style.display='none';
+  document.getElementById('btnCompleteSignup').style.display='inline-block';
+  document.getElementById('msg').textContent='Nhập lại mật khẩu rồi bấm HOÀN TẤT ĐĂNG KÝ';
 };
 
-// Đăng ký khi Enter ở pass2
-document.getElementById('pass2').addEventListener('keyup', async e => {
-  if (e.key === 'Enter') {
-    const email = document.getElementById('email').value.trim();
-    const p1 = document.getElementById('pass1').value;
-    const p2 = document.getElementById('pass2').value;
-    const msg = document.getElementById('msg');
-    if (!email || !p1 || !p2) { msg.textContent = 'Nhập đầy đủ'; return; }
-    if (p1 !== p2) { msg.textContent = 'Mật khẩu không khớp'; return; }
-    if (p1.length < 6) { msg.textContent = 'Mật khẩu ít nhất 6 ký tự'; return; }
+// Hoàn tất đăng ký
+document.getElementById('btnCompleteSignup').onclick=async()=>{
+  const email=document.getElementById('email').value.trim();
+  const p1=document.getElementById('pass1').value;
+  const p2=document.getElementById('pass2').value;
+  const msg=document.getElementById('msg');
+  if(!email||!p1||!p2){msg.textContent='Nhập đầy đủ';return;}
+  if(p1!==p2){msg.textContent='Mật khẩu không khớp';return;}
+  if(p1.length<6){msg.textContent='Mật khẩu ít nhất 6 ký tự';return;}
+  if(getUsers().some(x=>x.email===email)){msg.textContent='Email đã tồn tại';return;}
 
-    let users = getUsers();
-    if (users.some(u => u.email === email)) { msg.textContent = 'Email đã tồn tại'; return; }
+  const h=await hash(p1);
+  const newUser={email,pass:h,balance:0,orders:[],isAdmin:false};
+  saveUsers([...getUsers(),newUser]);
+  localStorage.setItem('user',email);
+  updateUI(); closeAuth();
+  alert('Đăng ký thành công! Chào mừng bạn');
+};
 
-    const h = await hash(p1);
-    users.push({email, pass: h, balance: 0, orders: [], isAdmin: false});
-    saveUsers(users);
-    localStorage.setItem('user', email);
-    updateUI();
-    closeModal();
-    alert('Đăng ký thành công!');
-  }
-});
-
-// Admin
-document.getElementById('adminBtn').onclick = () => { location.href = 'dashboard.html'; };
+// Vào admin
+document.getElementById('adminBtn').onclick=()=>{location.href='dashboard.html';};
 
 updateUI();
-setInterval(updateUI, 2000);
+setInterval(updateUI,2000);
 </script>
 </body>
 </html>
