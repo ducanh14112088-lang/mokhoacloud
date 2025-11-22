@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="utf-8">
@@ -32,14 +32,13 @@
     <a href="dashboard.html">Cửa hàng</a>
     <span id="status" style="color:#00ff9d;font-weight:600">Chưa đăng nhập</span>
     <button class="btn" id="authBtn">Đăng nhập</button>
-    <button class="btn" id="adminBtn" style="display:none;background:#ff0066;color:#fff">ADMIN PANEL</button>
   </nav>
 </header>
 
 <div class="hero">
   <div style="position:relative;z-index:2">
     <h1>iCLOUD BYPASS GIÁ RẺ NHẤT 2025</h1>
-    <p>iPhone 11 → 17 Pro Max • iPad A12–M4 • iOS 18.6–26.1<br>Chỉ từ <b>90.000₫</b> • Full thông báo, FaceTime • Xử lý 5–30 phút</p>
+    <p>iPhone 11 → 17 Pro Max • iPad A12–M4 • iOS 18.6–26.1<br>Chỉ từ <b>90.000₫</b> • Full thông báo, FaceTime</p>
     <a href="dashboard.html" class="btn" style="padding:18px 50px;font-size:22px">MUA NGAY TỪ 90K</a>
   </div>
 </div>
@@ -53,121 +52,154 @@
     </div>
     <div class="important">
       <h3 style="color:#ff6b6b;margin:0">BẮT BUỘC ghi nội dung:</h3>
-      <code style="font-size:24px;color:#00ff9d;background:#000;padding:10px 20px;border-radius:12px" id="noidung">Đăng nhập để xem</code>
-      <p style="margin:10px 0 0;color:#ffaa00">Tiền sẽ được cộng <b>tự động trong 1–5 phút</b></p>
-    </div>
-    <div style="margin-top:25px;padding:16px;background:rgba(0,255,157,0.1);border-radius:12px">
-      Telegram: <a href="https://t.me/dung_tool_wallet" target="_blank" style="color:#00ff9d;font-size:24px">@dung_tool_wallet</a>
+      <code style="font-size:24px;color:#00ff9d;background:#000;padding:10px 20px;border-radius:12px" id="noidung">Đang tải...</code>
     </div>
   </div>
 </div>
 
-<!-- Modal Đăng nhập / Đăng ký -->
+<!-- Modal Login/Signup -->
 <div id="authModal" class="modal-backdrop">
   <div class="modal">
-    <h2 style="color:#00ff9d;margin-top:0">Đăng nhập / Đăng ký</h2>
+    <h2 style="color:#00ff9d">Đăng nhập / Đăng ký</h2>
     <input type="email" id="email" placeholder="Email của bạn">
     <input type="password" id="pass1" placeholder="Mật khẩu">
     <input type="password" id="pass2" placeholder="Nhập lại mật khẩu" style="display:none">
-
-    <div style="margin:20px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <div style="margin:20px 0;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
       <button class="btn" id="btnLogin">Đăng nhập</button>
       <button class="btn" id="btnSignup" style="background:#0066ff">Đăng ký</button>
-      <button class="btn" id="btnCompleteSignup" style="display:none;background:#ff0066">HOÀN TẤT ĐĂNG KÝ</button>
+      <button class="btn" id="btnCompleteSignup" style="display:none;background:#ff0066">HOÀN TẤT</button>
       <button class="btn" style="background:#666" onclick="closeAuth()">Hủy</button>
     </div>
-    <p id="msg" style="color:#ff6b6b;height:30px;margin:10px 0"></p>
+    <p id="msg" style="color:#ff6b6b;height:30px"></p>
   </div>
 </div>
 
-<script>
-async function hash(p){
-  const data = new TextEncoder().encode(p);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-function getUsers(){return JSON.parse(localStorage.getItem('users')||'[]')}
-function saveUsers(u){localStorage.setItem('users',JSON.stringify(u))}
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getDatabase, ref, set, get, child, onValue, orderByChild, equalTo, query } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-function currentUser(){
-  const e = localStorage.getItem('user');
-  return e ? getUsers().find(x=>x.email===e) : null;
-}
+  const firebaseConfig = {
+    apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4",
+    authDomain: "mokhoacloud.firebaseapp.com",
+    databaseURL: "https://mokhoacloud-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "mokhoacloud",
+    storageBucket: "mokhoacloud.firebasestorage.app",
+    messagingSenderId: "1013749304224",
+    appId: "1:1013749304224:web:2a02b904c17c0aaf7c32c5"
+  };
 
-function updateUI(){
-  const u = currentUser();
-  document.getElementById('status').textContent = u ? u.email + (u.email==='998822jj'?' (Admin)':'') : 'Chưa đăng nhập';
-  document.getElementById('status').style.color = u?.email==='998822jj'?'#ff0066':'#00ff9d';
-  document.getElementById('authBtn').textContent = u?'Đăng xuất':'Đăng nhập';
-  document.getElementById('adminBtn').style.display = u?.email==='998822jj'?'inline-block':'none';
-  document.getElementById('noidung').textContent = u?u.email:'Đăng nhập để xem';
-}
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-// Tạo admin mặc định
-if(getUsers().length===0){
-  hash('yeugame22').then(h=>saveUsers([{email:'998822jj',pass:h,balance:999999999,orders:[],isAdmin:true}]));
-}
+  let currentUser = null;
 
-function closeAuth(){document.getElementById('authModal').style.display='none';}
-
-// Mở modal
-document.getElementById('authBtn').onclick=()=>{
-  if(currentUser()){
-    if(confirm('Đăng xuất?')){localStorage.removeItem('user');updateUI();}
-    return;
+  // SHA-256 hash mật khẩu
+  async function hash(p) {
+    const data = new TextEncoder().encode(p);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
-  document.getElementById('authModal').style.display='flex';
-  document.getElementById('pass2').style.display='none';
-  document.getElementById('btnSignup').style.display='inline-block';
-  document.getElementById('btnCompleteSignup').style.display='none';
-  document.getElementById('msg').textContent='';
-};
 
-// Đăng nhập
-document.getElementById('btnLogin').onclick=async()=>{
-  const email=document.getElementById('email').value.trim();
-  const pass=document.getElementById('pass1').value;
-  const msg=document.getElementById('msg');
-  if(!email||!pass){msg.textContent='Nhập đầy đủ';return;}
-  const user=getUsers().find(x=>x.email===email);
-  if(!user){msg.textContent='Email chưa đăng ký';return;}
-  if(await hash(pass)!==user.pass){msg.textContent='Sai mật khẩu';return;}
-  localStorage.setItem('user',email);
-  updateUI(); closeAuth(); alert('Đăng nhập thành công!');
-};
+  function updateUI() {
+    if (!currentUser) {
+      document.getElementById('status').textContent = 'Chưa đăng nhập';
+      document.getElementById('noidung').textContent = 'Đăng nhập để xem';
+    } else {
+      const isAdmin = currentUser.isAdmin;
+      document.getElementById('status').textContent = currentUser.email + (isAdmin ? ' (Admin)' : '');
+      document.getElementById('status').style.color = isAdmin ? '#ff0066' : '#00ff9d';
+      document.getElementById('noidung').textContent = currentUser.email;
+    }
+    document.getElementById('authBtn').textContent = currentUser ? 'Đăng xuất' : 'Đăng nhập';
+  }
 
-// Chuyển sang chế độ đăng ký
-document.getElementById('btnSignup').onclick=()=>{
-  document.getElementById('pass2').style.display='block';
-  document.getElementById('btnSignup').style.display='none';
-  document.getElementById('btnCompleteSignup').style.display='inline-block';
-  document.getElementById('msg').textContent='Nhập lại mật khẩu rồi bấm HOÀN TẤT ĐĂNG KÝ';
-};
+  function closeAuth() {
+    document.getElementById('authModal').style.display = 'none';
+  }
 
-// Hoàn tất đăng ký
-document.getElementById('btnCompleteSignup').onclick=async()=>{
-  const email=document.getElementById('email').value.trim();
-  const p1=document.getElementById('pass1').value;
-  const p2=document.getElementById('pass2').value;
-  const msg=document.getElementById('msg');
-  if(!email||!p1||!p2){msg.textContent='Nhập đầy đủ';return;}
-  if(p1!==p2){msg.textContent='Mật khẩu không khớp';return;}
-  if(p1.length<6){msg.textContent='Mật khẩu ít nhất 6 ký tự';return;}
-  if(getUsers().some(x=>x.email===email)){msg.textContent='Email đã tồn tại';return;}
+  // Load user từ localStorage
+  const savedEmail = localStorage.getItem('userEmail');
+  if (savedEmail) {
+    const userRef = ref(db, 'users/' + btoa(savedEmail));
+    onValue(userRef, (snap) => {
+      if (snap.exists()) {
+        currentUser = snap.val();
+        currentUser.email = savedEmail;
+        updateUI();
+      }
+    }, { onlyOnce: true });
+  }
 
-  const h=await hash(p1);
-  const newUser={email,pass:h,balance:0,orders:[],isAdmin:false};
-  saveUsers([...getUsers(),newUser]);
-  localStorage.setItem('user',email);
-  updateUI(); closeAuth();
-  alert('Đăng ký thành công! Chào mừng bạn');
-};
+  document.getElementById('authBtn').onclick = () => {
+    if (currentUser) {
+      if (confirm('Đăng xuất?')) {
+        localStorage.removeItem('userEmail');
+        currentUser = null;
+        updateUI();
+      }
+      return;
+    }
+    document.getElementById('authModal').style.display = 'flex';
+    document.getElementById('pass2').style.display = 'none';
+    document.getElementById('btnSignup').style.display = 'inline-block';
+    document.getElementById('btnCompleteSignup').style.display = 'none';
+    document.getElementById('msg').textContent = '';
+  };
 
-// Vào admin
-document.getElementById('adminBtn').onclick=()=>{location.href='dashboard.html';};
+  // Đăng nhập
+  document.getElementById('btnLogin').onclick = async () => {
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('pass1').value;
+    const msg = document.getElementById('msg');
+    if (!email || !pass) return msg.textContent = 'Nhập đầy đủ';
 
-updateUI();
-setInterval(updateUI,2000);
+    const userRef = ref(db, 'users/' + btoa(email));
+    const snap = await get(userRef);
+    if (!snap.exists()) return msg.textContent = 'Email chưa đăng ký';
+
+    const user = snap.val();
+    if (await hash(pass) !== user.pass) return msg.textContent = 'Sai mật khẩu';
+
+    localStorage.setItem('userEmail', email);
+    currentUser = user;
+    currentUser.email = email;
+    updateUI();
+    closeAuth();
+    alert('Đăng nhập thành công!');
+  };
+
+  // Đăng ký
+  document.getElementById('btnSignup').onclick = () => {
+    document.getElementById('pass2').style.display = 'block';
+    document.getElementById('btnSignup').style.display = 'none';
+    document.getElementById('btnCompleteSignup').style.display = 'inline-block';
+  };
+
+  document.getElementById('btnCompleteSignup').onclick = async () => {
+    const email = document.getElementById('email').value.trim();
+    const p1 = document.getElementById('pass1').value;
+    const p2 = document.getElementById('pass2').value;
+    const msg = document.getElementById('msg');
+    if (p1 !== p2) return msg.textContent = 'Mật khẩu không khớp';
+    if (p1.length < 6) return msg.textContent = 'Mật khẩu ít nhất 6 ký tự';
+
+    const userRef = ref(db, 'users/' + btoa(email));
+    const snap = await get(userRef);
+    if (snap.exists()) return msg.textContent = 'Email đã tồn tại';
+
+    const h = await hash(p1);
+    const newUser = { email, pass: h, balance: 0, orders: {}, isAdmin: email === 'admin@ibypass.shop' }; // Thay email admin nếu cần
+
+    await set(userRef, newUser);
+    localStorage.setItem('userEmail', email);
+    currentUser = newUser;
+    currentUser.email = email;
+    updateUI();
+    closeAuth();
+    alert('Đăng ký thành công!');
+  };
+
+  updateUI();
 </script>
 </body>
 </html>
