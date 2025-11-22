@@ -6,48 +6,39 @@
   <title>ADMIN PANEL - iBYPASS SHOP</title>
   <style>
     body{margin:0;background:#0a0a0f;color:#e0e7ff;font-family:Segoe UI,sans-serif;padding:20px}
-    .card{background:#111118;border:2px solid #00ff9d;border-radius:18px;padding:25px;margin:20px 0;box-shadow:0 0 30px #00ff9d33}
-    h1{color:#00ff9d;text-align:center;font-size:40px;margin:0}
+    .card{background:#111118;border:2px solid #00ff9d;border-radius:18px;padding:25px;margin:20px 0}
+    h1{color:#00ff9d;text-align:center;font-size:40px}
     table{width:100%;border-collapse:collapse;margin:20px 0}
     th,td{padding:14px;text-align:center;border-bottom:1px solid #333}
     th{background:#00ff9d;color:#000;font-weight:900}
     .btn{background:#00ff9d;color:#000;padding:10px 20px;border:none;border-radius:12px;cursor:pointer;font-weight:700}
     .btn-danger{background:#ff0066}
-    .new{background:#300;border:3px solid #ff0066 !important;animation:blink 1s infinite}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.6}}
-    .noti-count{position:fixed;top:20px;right:20px;background:#ff0066;color:#fff;padding:10px 20px;border-radius:50px;font-size:20px;font-weight:900;z-index:999;box-shadow:0 0 20px #ff0066}
+    .new{background:#300;border:3px solid #ff6b6b !important;animation:glow 1.5s infinite}
+    @keyframes glow{0%,100%{box-shadow:0 0 10px #ff6b6b}50%{box-shadow:0 0 30px #ff6b6b}}
+    .noti{position:fixed;top:20px;right:20px;background:#ff0066;color:#fff;padding:15px 25px;border-radius:50px;font-size:20px;font-weight:900;z-index:999}
     audio{display:none}
   </style>
 </head>
 <body>
 
-<h1>ADMIN PANEL</h1>
-<div id="notiCount" class="noti-count" style="display:none">0</div>
+<h1>ADMIN PANEL - iBYPASS SHOP</h1>
+<div id="noti" class="noti" style="display:none">0</div>
 
 <div class="card">
-  <h2>ĐƠN HÀNG CHỜ XỬ LÝ</h2>
-  <table><thead><tr><th>Mã đơn</th><th>Email</th><th>Sản phẩm</th><th>Serial</th><th>Giá</th><th>Thời gian</th><th>Hoàn tất</th></tr></thead><tbody id="ordersBody"></tbody></table>
+  <h2>ĐƠN HÀNG CHỜ XỬ LÝ (<span id="orderCount">0</span>)</h2>
+  <div id="ordersBody"></div>
 </div>
 
 <div class="card">
-  <h2>YÊU CẦU NẠP TIỀN MỚI</h2>
-  <table><thead><tr><th>ID</th><th>Email</th><th>Số tiền</th><th>Thời gian</th><th>Duyệt</th></tr></thead><tbody id="topupsBody"></tbody></table>
-</div>
-
-<div class="card">
-  <h2>QUẢN LÝ SẢN PHẨM</h2>
-  <input id="pName" placeholder="Tên sản phẩm" style="width:30%;padding:12px;margin:5px;border-radius:12px;background:#000;color:#fff">
-  <input id="pPrice" type="number" placeholder="Giá" style="width:20%;padding:12px;margin:5px;border-radius:12px;background:#000;color:#fff">
-  <input id="pDesc" placeholder="Mô tả" style="width:40%;padding:12px;margin:5px;border-radius:12px;background:#000;color:#fff">
-  <button class="btn" onclick="addProduct()">THÊM SẢN PHẨM</button>
-  <div id="productList"></div>
+  <h2>YÊU CẦU NẠP TIỀN CHỜ DUYỆT (<span id="topupCount">0</span>)</h2>
+  <div id="topupsBody"></div>
 </div>
 
 <audio id="ding" src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3" preload="auto"></audio>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+  import { getDatabase, ref, onValue, remove, runTransaction } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
   const app = initializeApp({
     apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4",
@@ -57,81 +48,75 @@
   });
   const db = getDatabase(app);
   const ding = document.getElementById('ding');
-  const notiCount = document.getElementById('notiCount');
+  const noti = document.getElementById('noti');
 
-  // Chỉ admin 998822jj mới vào được
+  // Chỉ admin mới vào được
   if (localStorage.getItem('userEmail') !== '998822jj') {
     alert('Chỉ admin mới vào được!');
     location.href = 'index.html';
   }
 
-  // === 1. ĐƠN HÀNG CHỜ ===
+  let lastTotal = 0;
+
+  // === ĐƠN HÀNG CHỜ ===
   onValue(ref(db, 'pendingOrders'), snap => {
-    const orders = snap.val() || {};
-    const html = Object.keys(orders).map(key => {
-      const o = orders[key];
-      return `<tr class="new"><td>${o.orderId}</td><td>${o.email}</td><td>${o.product}</td><td>${o.seri}</td><td>${o.price.toLocaleString()}₫</td><td>${o.date}</td>
-        <td><button class="btn" onclick="doneOrder('${key}','${o.email}','${o.orderId}')">HOÀN TẤT</button></td></tr>`;
-    }).join('');
-    document.getElementById('ordersBody').innerHTML = html || '<tr><td colspan="7">Không có đơn nào</td></tr>';
-    updateNoti(Object.keys(orders).length);
+    const data = snap.val() || {};
+    const keys = Object.keys(data);
+    document.getElementById('orderCount').textContent = keys.length;
+    document.getElementById('ordersBody').innerHTML = keys.map(key => {
+      const o = data[key];
+      return `<div class="new" style="padding:15px;margin:10px 0;background:#200;border-radius:12px">
+        <strong>${o.orderId}</strong> | ${o.email} | ${o.product} | Serial: ${o.seri} | ${o.price.toLocaleString()}₫ | ${o.date}
+        <button class="btn" style="float:right" onclick="done('${key}','${o.email}','${o.orderId}')">HOÀN TẤT</button>
+      </div>`;
+    }).join('') || '<p>Không có đơn nào</p>';
+    updateNoti();
   });
 
-  // === 2. NẠP TIỀN CHỜ DUYỆT ===
+  // === NẠP TIỀN CHỜ DUYỆT ===
   onValue(ref(db, 'pendingTopups'), snap => {
-    const topups = snap.val() || {};
-    const html = Object.keys(topups).map(key => {
-      const t = topups[key];
-      return `<tr class="new"><td>${t.id}</td><td>${t.email}</td><td>${t.amount.toLocaleString()}₫</td><td>${t.date}</td>
-        <td><button class="btn" onclick="approveTopup('${key}','${t.email}',${t.amount})">DUYỆT</button></td></tr>`;
-    }).join('');
-    document.getElementById('topupsBody').innerHTML = html || '<tr><td colspan="5">Không có yêu cầu nào</td></tr>';
+    const data = snap.val() || {};
+    const keys = Object.keys(data);
+    document.getElementById('topupCount').textContent = keys.length;
+    document.getElementById('topupsBody').innerHTML = keys.map(key => {
+      const t = data[key];
+      return `<div class="new" style="padding:15px;margin:10px 0;background:#200;border-radius:12px">
+        <strong>${t.id}</strong> | ${t.email} | ${t.amount.toLocaleString()}₫ | ${t.date}
+        <button class="btn" style="float:right" onclick="duyet('${key}','${t.email}',${t.amount})">DUYỆT NGAY</button>
+      </div>`;
+    }).join('') || '<p>Không có yêu cầu nạp nào</p>';
+    updateNoti();
   });
 
-  // === 3. QUẢN LÝ SẢN PHẨM ===
-  onValue(ref(db, 'products'), snap => {
-    const prods = snap.val() || {};
-    document.getElementById('productList').innerHTML = Object.keys(prods).map(key => 
-      `<div style="margin:15px 0;padding:15px;background:#111;border:1px solid #00ff9d;border-radius:12px">
-        <strong>${prods[key].name}</strong> – ${prods[key].price.toLocaleString()}₫<br>${prods[key].desc}
-        <button class="btn btn-danger" style="float:right" onclick="delProd('${key}')">XÓA</button>
-      </div>`
-    ).join('');
-  });
+  // Hàm duyệt nạp tiền – FIX 100%
+  window.duyet = async (key, email, amount) => {
+    if (!confirm(`Duyệt nạp ${amount.toLocaleString()}₫ cho ${email}?`)) return;
+    
+    const balanceRef = ref(db, 'users/' + btoa(email) + '/balance');
+    await runTransaction(balanceRef, current => (current || 0) + amount);
+    
+    await remove(ref(db, 'pendingTopups/' + key));
+    alert('ĐÃ DUYỆT THÀNH CÔNG! Tiền đã vào tài khoản khách ngay lập tức.');
+  };
 
-  window.doneOrder = (key, email, orderId) => {
+  // Hoàn tất đơn hàng
+  window.done = async (key, email, orderId) => {
     if (!confirm('Hoàn tất đơn này?')) return;
-    set(ref(db, 'users/'+btoa(email)+'/orders/'+orderId+'/status'), 'success');
-    remove(ref(db, 'pendingOrders/'+key));
+    await set(ref(db, 'users/' + btoa(email) + '/orders/' + orderId + '/status'), 'success');
+    await remove(ref(db, 'pendingOrders/' + key));
     alert('Đã hoàn tất đơn ' + orderId);
   };
 
-  window.approveTopup = async (key, email, amount) => {
-    if (!confirm(`Duyệt nạp ${amount.toLocaleString()}₫ cho ${email}?`)) return;
-    const userRef = ref(db, 'users/'+btoa(email)+'/balance');
-    await runTransaction(userRef, v => (v||0) + amount);
-    remove(ref(db, 'pendingTopups/'+key));
-    alert('Đã duyệt nạp thành công!');
-  };
-
-  window.addProduct = () => {
-    const name = prompt('Tên sản phẩm:');
-    const price = parseInt(prompt('Giá tiền:'));
-    const desc = prompt('Mô tả:');
-    if (name && price && desc) push(ref(db, 'products'), {name, price, desc});
-  };
-
-  window.delProd = key => confirm('Xóa sản phẩm này?') && remove(ref(db, 'products/'+key));
-
-  // Thông báo + âm thanh khi có đơn mới hoặc nạp mới
-  let lastCount = 0;
-  function updateNoti(count) {
-    if (count > lastCount) {
+  // Thông báo + âm thanh
+  function updateNoti() {
+    const total = parseInt(document.getElementById('orderCount').textContent) + parseInt(document.getElementById('topupCount').textContent);
+    if (total > lastTotal && total > 0) {
       ding.play();
-      notiCount.textContent = count;
-      notiCount.style.display = 'block';
+      noti.textContent = total + ' MỚI!';
+      noti.style.display = 'block';
     }
-    lastCount = count;
+    lastTotal = total;
+    if (total === 0) noti.style.display = 'none';
   }
 </script>
 </body>
