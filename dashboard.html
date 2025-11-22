@@ -108,16 +108,17 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
+  // Bắt buộc phải đăng nhập
   if (!localStorage.getItem('userEmail')) location.href = 'index.html';
-  document.getElementById('loader').remove();
 
-  // Tắt loading nếu treo quá 8 giây
-  setTimeout(() => document.getElementById('loader')?.remove(), 8000);
+  // Tắt loading ngay lập tức (tránh treo)
+  const loader = document.getElementById('loader');
+  if (loader) loader.remove();
 
   const $ = s => document.querySelector(s);
   let currentUser = null;
 
-  // 5 SẢN PHẨM CŨ – BẮT BUỘC PHẢI CÓ
+  // 5 SẢN PHẨM CŨ – BẮT BUỘC HIỆN
   const defaultProducts = {
     "p1": { name: "Nothing PRO Bypass iPhone 11 → 17 Pro Max", price: 120000, desc: "iOS 18.6–26.1 • Full iCloud, Notification, FaceTime • Windows Tool" },
     "p2": { name: "HFZ Activator A12+ Premium Bypass", price: 120000, desc: "All iPhone/iPad • Full Notification, FaceTime • Windows" },
@@ -126,8 +127,9 @@
     "p5": { name: "FRPFILE Activator A12+ Hello Screen", price: 90000, desc: "iPhone XR–17 Pro Max & iPad A12–M3 • Full iCloud" }
   };
 
-  // Load user + UI
-  onValue(ref(db, 'users/' + btoa(localStorage.getItem('userEmail'))), snap => {
+  // Load user
+  const userPath = 'users/' + btoa(localStorage.getItem('userEmail'));
+  onValue(ref(db, userPath), snap => {
     if (snap.exists()) {
       currentUser = { ...snap.val(), email: localStorage.getItem('userEmail') };
       $('#status').textContent = currentUser.email + (currentUser.email === '998822jj' ? ' (Admin)' : '');
@@ -140,81 +142,95 @@
     }
   });
 
-  // ←←←←← ĐOẠN QUAN TRỌNG NHẤT – TỰ ĐỘNG TẠO 5 SP CŨ NẾU TRỐNG
+  // Load + tự động tạo 5 sản phẩm nếu trống
   onValue(ref(db, 'products'), snap => {
-    {
-    const data = snap.val();
-    if (!data || Object.keys(data).length === 0) {
-      // TỰ ĐỘNG ĐẨY 5 SẢN PHẨM CŨ LÊN FIREBASE
-      set(ref(db, 'products'), defaultProducts).then(() => {
-        console.log("Đã tự động tạo 5 sản phẩm cũ!");
-      });
-      renderProducts(defaultProducts);
-    } else {
-      renderProducts(data);
-    }
-  });
+    let prods = snap.val();
 
-  function renderProducts(prods) {
+    if (!prods || Object.keys(prods).length === 0) {
+      // TỰ ĐỘNG TẠO 5 SP CŨ
+      set(ref(db, 'products'), defaultProducts);
+      prods = defaultProducts;
+    }
+
     $('#products').innerHTML = Object.values(prods).map(p => `
       <div class="product">
         <h3>${p.name}</h3>
         <p>${p.desc}</p>
         <div class="price">${p.price.toLocaleString()}₫</div>
-        <button class="btn btn-buy" onclick="buy('${p.name}',${p.price})">MUA NGAY</button>
+        <button class="btn btn-buy" onclick="buy('${p.name.replace(/'/g, "\\'")}', ${p.price})">MUA NGAY</button>
       </div>
+    `).join('');
+  });
+
+  // Lịch sử đơn
+  function renderHistory() {
+    if (!currentUser?.orders || Object.keys(currentUser.orders).length === 0) return;
+    $('#history').style.display = 'block';
+    $('#tbody').innerHTML = Object.values(currentUser.orders).reverse().map(o => `
+      <tr>
+        <td><code class="order-code" onclick="navigator.clipboard.writeText('${o.id}');alert('Đã copy!')">${o.id}</code></td>
+        <td>${o.product}</td>
+        <td>${o.price.toLocaleString()}</td>
+        <td><code>${o.seri||'-'}</code></td>
+        <td style="color:${o.status==='success'?'#00ff9d':o.status==='refunded'?'#ff6b6b':'#ffaa00'}">
+          ${o.status==='success'?'DONE':o.status==='refunded'?'HOÀN':'PENDING'}
+        </td>
+        <td>${o.date}</td>
+      </tr>
     `).join('');
   }
 
-  // Các hàm còn lại giữ nguyên (mua hàng, nạp tiền, lịch sử…)
-  // (mình để ngắn gọn, bạn chỉ cần dán đè từ <script> trở xuống là đủ rồi)
-
+  // Mua hàng
   window.buy = (name, price) => {
     if ((currentUser?.balance || 0) < price) return alert('Không đủ tiền!');
-    $('#modalInner').innerHTML = `<h3 style="color:#00ff9d">Mua ${name}</h3>
+    $('#modalInner').innerHTML = `
+      <h3 style="color:#00ff9d">Xác nhận mua: ${name}</h3>
       <input id="seri" placeholder="Nhập Serial / IMEI" style="width:100%;padding:14px;margin:12px 0;border-radius:12px;background:#000;color:#fff">
-      <button class="btn" onclick="confirmBuy('${name}',${price})">GỬI ĐƠN</button>
+      <button class="btn" onclick="confirmBuy('${name.replace(/'/g, "\\'")}', ${price})">GỬI ĐƠN</button>
       <button class="btn" style="background:#666;margin-left:8px" onclick="closeModal()">Hủy</button>`;
     $('#modalRoot').style.display = 'flex';
   };
 
   window.confirmBuy = async (name, price) => {
     const seri = $('#seri').value.trim();
-    if (!seri) return alert('Nhập Serial/IMEI!');
+    if (!seri) return alert('Vui lòng nhập Serial/IMEI!');
+
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let orderId = '';
-    for (let i = 0; i < 12; i++) orderId += chars[Math.floor(Math.random() * chars.length)];
+    for (let i = 0; i < 12; i++) orderId += chars.charAt(Math.floor(Math.random() * chars.length));
 
-    await set(ref(db, 'pendingOrders/' + orderId), { orderId, email: currentUser.email, product: name, price, seri, date: new Date().toLocaleString('vi-VN') });
-    await set(ref(db, 'users/' + btoa(currentUser.email) + '/balance'), (currentUser.balance || 0) - price);
-    await push(ref(db, 'users/' + btoa(currentUser.email) + '/orders'), { id: orderId, product: name, price, seri, status: 'pending', date: new Date().toLocaleString('vi-VN') });
+    await set(ref(db, 'pendingOrders/' + orderId), {
+      orderId, email: currentUser.email, product: name, price, seri,
+      date: new Date().toLocaleString('vi-VN')
+    });
 
-    alert(`ĐÃ GỬI ĐƠN!\nMã đơn: ${orderId}\nCopy lại để theo dõi nhé!`);
+    await set(ref(db, userPath + '/balance'), (currentUser.balance || 0) - price);
+    await push(ref(db, userPath + '/orders'), {
+      id: orderId, product: name, price, seri, status: 'pending',
+      date: new Date().toLocaleString('vi-VN')
+    });
+
+    alert(`ĐÃ GỬI ĐƠN!\nMã đơn 12 ký tự:\n${orderId}\nLưu lại nhé!`);
     closeModal();
   };
 
+  // Nạp tiền
   $('#topupBtn').onclick = async () => {
     const amount = parseInt($('#topupAmount').value);
     if (!amount || amount < 10000) return alert('Tối thiểu 10.000đ');
     const id = 'TP' + Date.now();
     await set(ref(db, 'pendingTopups/' + id), { id, email: currentUser.email, amount, date: new Date().toLocaleString('vi-VN') });
-    alert('Đã gửi yêu cầu nạp! Chờ admin duyệt.');
+    alert('Đã gửi yêu cầu nạp tiền!');
     $('#topupAmount').value = '';
   };
 
-  $('#authBtn').onclick = () => confirm('Đăng xuất?') && (localStorage.removeItem('userEmail'), location.href='index.html');
+  // Đăng xuất
+  $('#authBtn').onclick = () => {
+    if (confirm('Đăng xuất thật không?')) {
+      localStorage.removeItem('userEmail');
+      location.href = 'index.html';
+    }
+  };
 
   window.closeModal = () => $('#modalRoot').style.display = 'none';
-
-  function renderHistory() {
-    if (!currentUser?.orders || Object.keys(currentUser.orders).length === 0) return;
-    $('#history').style.display = 'block';
-    $('#tbody').innerHTML = Object.values(currentUser.orders).reverse().map(o => `
-      <tr>
-        <td><code class="order-code" onclick="navigator.clipboard.writeText('${o.id}');alert('Copied!')">${o.id}</code></td>
-        <td>${o.product}</td><td>${o.price.toLocaleString()}</td><td><code>${o.seri}</code></td>
-        <td style="color:${o.status==='success'?'#00ff9d':o.status==='refunded'?'#ff6b6b':'#ffaa00'}">${o.status==='success'?'DONE':o.status==='refunded'?'HOÀN':'PENDING'}</td>
-        <td>${o.date}</td>
-      </tr>`).join('');
-  }
 </script>
