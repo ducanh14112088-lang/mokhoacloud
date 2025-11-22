@@ -26,6 +26,7 @@
     #adminPanel{background:#100;border:2px solid #ff0066;padding:30px;border-radius:20px;margin:20px 0;display:none}
     .admin-item{background:#200;padding:16px;margin:12px 0;border-left:4px solid #ffaa00;border-radius:8px}
     .admin-topup{background:#002;border-left:4px solid #00d4ff}
+    .order-code{font-size:20px !important;color:#00ff9d;background:#000;padding:6px 12px;border-radius:10px;font-weight:900}
   </style>
 </head>
 <body>
@@ -66,7 +67,7 @@
 
   <div class="card" id="history" style="display:none">
     <h2>Lịch sử đơn hàng</h2>
-    <table width="100%"><thead><tr><th>Mã</th><th>Sản phẩm</th><th>Giá</th><th>Seri</th><th>Trạng thái</th><th>Thời gian</th></tr></thead><tbody id="tbody"></tbody></table>
+    <table width="100%"><thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Giá</th><th>Seri</th><th>Trạng thái</th><th>Thời gian</th></tr></thead><tbody id="tbody"></tbody></table>
   </div>
 
   <div id="adminPanel">
@@ -132,7 +133,6 @@
     $('#balance').textContent = (u?.balance || 0).toLocaleString();
     $('#adminPanel').style.display = u?.isAdmin ? 'block' : 'none';
 
-    // Sản phẩm
     $('#products').innerHTML = PRODUCTS.map(p => `
       <div class="product">
         <h3>${p.name}</h3><p>${p.desc}</p>
@@ -141,7 +141,6 @@
       </div>
     `).join('');
 
-    // Lịch sử
     const tbody = $('#tbody');
     tbody.innerHTML = '';
     if (u?.orders && Object.keys(u.orders).length) {
@@ -150,12 +149,19 @@
         const status = o.status === 'success' ? '<span class="status-success">DONE</span>' :
                       o.status === 'refunded' ? '<span class="status-refunded">HOÀN</span>' :
                       '<span class="status-pending">PENDING</span>';
-        tbody.innerHTML += `<tr><td>${o.id}</td><td>${o.product}</td><td>${o.price.toLocaleString()}</td><td><code>${o.seri}</code></td><td>${status}</td><td>${o.date}</td></tr>`;
+        tbody.innerHTML += `<tr>
+          <td><code class="order-code">${o.id}</code></td>
+          <td>${o.product}</td>
+          <td>${o.price.toLocaleString()}</td>
+          <td><code>${o.seri}</code></td>
+          <td>${status}</td>
+          <td>${o.date}</td>
+        </tr>`;
       });
     }
   }
 
-  // Realtime admin notifications
+  // Realtime thông báo admin
   onValue(ref(db, 'pendingOrders'), (snap) => {
     const count = snap.val() ? Object.keys(snap.val()).length : 0;
     if (count > lastOrderCount && lastOrderCount > 0) {
@@ -178,6 +184,7 @@
     let html = `<h3 style="color:#ffaa00">Đơn chờ xử lý (${Object.keys(orders).length})</h3>`;
     Object.values(orders).forEach(o => {
       html += `<div class="admin-item">
+        <b>Mã đơn:</b> <code class="order-code">${o.orderId}</code><br>
         <b>${o.email}</b> – ${o.product} – ${o.price.toLocaleString()}₫ – SN: <code>${o.seri}</code><br>${o.date}
         <button class="btn" style="background:#00ff9d;color:#000;margin:8px 4px 0 0" onclick="adminSuccess('${o.orderId}','${o.email}')">SUCCESS</button>
         <button class="btn" style="background:#ff0066" onclick="adminRefund('${o.orderId}','${o.email}',${o.price})">HOÀN TIỀN</button>
@@ -211,65 +218,94 @@
 
   window.confirmBuy = async (id, name, price) => {
     const seri = $('#seri').value.trim();
-    if (!seri) return alert('Nhập SN!');
+    if (!seri) return alert('Nhập Serial Number!');
 
-    const orderId = 'ORD' + Date.now();
-    const order = { orderId, email: currentUser.email, product: name, price, seri, date: new Date().toLocaleString('vi-VN') };
+    // TẠO MÃ ĐƠN 12 KÝ TỰ IN HOA + SỐ
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let orderCode = '';
+    for (let i = 0; i < 12; i++) {
+      orderCode += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const orderId = orderCode;
+
+    const order = {
+      orderId,
+      email: currentUser.email,
+      product: name,
+      price,
+      seri,
+      date: new Date().toLocaleString('vi-VN'),
+      timestamp: serverTimestamp()
+    };
 
     await set(ref(db, 'pendingOrders/' + orderId), order);
     await set(ref(db, 'users/' + btoa(currentUser.email) + '/balance'), (currentUser.balance || 0) - price);
-    await push(ref(db, 'users/' + btoa(currentUser.email) + '/orders'), { ...order, status: 'pending' });
+    await push(ref(db, 'users/' + btoa(currentUser.email) + '/orders'), {
+      id: orderId,
+      product: name,
+      price,
+      seri,
+      status: 'pending',
+      date: order.date
+    });
 
-    alert('Đơn đã gửi! Chờ admin xử lý.');
+    alert(`ĐƠN HÀNG ĐÃ GỬI THÀNH CÔNG!\n\nMã đơn của bạn:\n${orderId}\n\nVui lòng lưu lại mã này để theo dõi!`);
     closeModal();
   };
 
   $('#topupBtn').onclick = async () => {
     const amount = parseInt($('#topupAmount').value);
-    if (amount < 10000) return alert('Tối thiểu 10k');
+    if (amount < 10000) return alert('Tối thiểu 10.000đ');
     const id = 'TP' + Date.now();
-    await set(ref(db, 'pendingTopups/' + id), { id, email: currentUser.email, amount, date: new Date().toLocaleString('vi-VN') });
-    alert('Yêu cầu nạp đã gửi!');
+    await set(ref(db, 'pendingTopups/' + id), {
+      id,
+      email: currentUser.email,
+      amount,
+      date: new Date().toLocaleString('vi-VN')
+    });
+    alert('Yêu cầu nạp tiền đã được gửi!\nChờ admin duyệt trong vài phút.');
     $('#topupAmount').value = '';
   };
 
   window.adminSuccess = async (orderId, email) => {
     await remove(ref(db, 'pendingOrders/' + orderId));
-    const userRef = ref(db, 'users/' + btoa(email) + '/orders');
-    const snap = await get(userRef);
-    const orders = snap.val() || {};
-    Object.keys(orders).forEach(key => {
-      if (orders[key].orderId === orderId) {
-        set(ref(db, 'users/' + btoa(email) + '/orders/' + key + '/status'), 'success');
-      }
-    });
-    alert('Đã SUCCESS!');
+    const ordersRef = ref(db, 'users/' + btoa(email) + '/orders');
+    const snap = await get(ordersRef);
+    if (snap.exists()) {
+      Object.keys(snap.val()).forEach(key => {
+        if (snap.val()[key].id === orderId) {
+          set(ref(db, 'users/' + btoa(email) + '/orders/' + key + '/status'), 'success');
+        }
+      });
+    }
+    alert('Đã đánh dấu SUCCESS!');
   };
 
   window.adminRefund = async (orderId, email, price) => {
-    if (!confirm('Hoàn tiền?')) return;
+    if (!confirm('Hoàn tiền cho đơn này?')) return;
     await remove(ref(db, 'pendingOrders/' + orderId));
-    const userRef = ref(db, 'users/' + btoa(email));
-    const snap = await get(userRef);
-    const user = snap.val();
+    const userSnap = await get(ref(db, 'users/' + btoa(email)));
+    const user = userSnap.val();
     await set(ref(db, 'users/' + btoa(email) + '/balance'), (user.balance || 0) + price);
-    const ordersSnap = await get(ref(db, 'users/' + btoa(email) + '/orders'));
-    const orders = ordersSnap.val() || {};
-    Object.keys(orders).forEach(key => {
-      if (orders[key].orderId === orderId) {
-        set(ref(db, 'users/' + btoa(email) + '/orders/' + key + '/status'), 'refunded');
-      }
-    });
-    alert('Đã hoàn tiền!');
+    const ordersRef = ref(db, 'users/' + btoa(email) + '/orders');
+    const snap = await get(ordersRef);
+    if (snap.exists()) {
+      Object.keys(snap.val()).forEach(key => {
+        if (snap.val()[key].id === orderId) {
+          set(ref(db, 'users/' + btoa(email) + '/orders/' + key + '/status'), 'refunded');
+        }
+      });
+    }
+    alert('Đã hoàn tiền thành công!');
   };
 
   window.approveTopup = async (id, email, amount) => {
     await remove(ref(db, 'pendingTopups/' + id));
-    const userRef = ref(db, 'users/' + btoa(email));
-    const snap = await get(userRef);
-    const user = snap.val();
+    const userSnap = await get(ref(db, 'users/' + btoa(email)));
+    const user = userSnap.val();
     await set(ref(db, 'users/' + btoa(email) + '/balance'), (user.balance || 0) + amount);
-    alert('Đã duyệt nạp!');
+    alert(`Đã duyệt nạp ${amount.toLocaleString()}₫ cho ${email}`);
   };
 
   $('#authBtn').onclick = () => { location.href = 'index.html'; };
