@@ -28,8 +28,8 @@
     @keyframes s{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
     .backtop{position:fixed;bottom:20px;right:20px;background:#00ff9d;color:#000;padding:15px 18px;border:none;border-radius:50%;font-size:24px;box-shadow:0 4px 20px #00ff9d88;z-index:99;cursor:pointer}
     .telegram-btn{position:fixed;bottom:20px;left:20px;background:#0088cc;color:white;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 4px 20px #0088cc88;z-index:999}
-    #adminPanel{background:#100;border:2px solid #ff0066;padding:30px;border-radius:20px;margin:20px 0;display:none}
-    .admin-item{background:#200;padding:16px;margin:12px 0;border-left:4px solid #ffaa00;border-radius:8px}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:999}
+    .modal{max-width:500px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri)}
   </style>
 </head>
 <body>
@@ -41,6 +41,7 @@
   <nav>
     <a href="index.html">Trang chủ</a>
     <a href="dashboard.html">Cửa hàng</a>
+    <a href="admin.html" id="adminLink" style="display:none;color:#ff0066;font-weight:700">ADMIN PANEL</a>
     <span id="status">Chưa đăng nhập</span>
     <button class="btn" id="authBtn">Đăng nhập</button>
   </nav>
@@ -74,8 +75,6 @@
     <h2>Lịch sử đơn hàng</h2>
     <table width="100%"><thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Giá</th><th>Seri</th><th>Trạng thái</th><th>Thời gian</th></tr></thead><tbody id="tbody"></tbody></table>
   </div>
-
-  <div id="adminPanel"></div>
 </div>
 
 <button class="backtop" onclick="scrollTo(0,0)">Up</button>
@@ -86,7 +85,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
   import { getDatabase, ref, set, get, push, remove, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-  const firebaseConfig = { /* giữ nguyên config của bạn */ 
+  const firebaseConfig = {
     apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4",
     authDomain: "mokhoacloud.firebaseapp.com",
     databaseURL: "https://mokhoacloud-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -94,31 +93,18 @@
     storageBucket: "mokhoacloud.firebasestorage.app",
     messagingSenderId: "1013749304224",
     appId: "1:1013749304224:web:2a02b904c17c0aaf7c32c5"
-  };
+ 20};
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Tự động về index nếu chưa login
   if(!localStorage.getItem('userEmail')) location.href='index.html';
-
-  const PRODUCTS = [ /* giữ nguyên 5 sản phẩm */ 
-    {id:1,name:"Nothing PRO Bypass iPhone 11 → 17 Pro Max",price:120000,desc:"iOS 18.6–26.1 • Full iCloud, Notification"},
-    {id:2,name:"HFZ Activator A12+ Premium Bypass",price:120000,desc:"All iPhone/iPad • Full Notification"},
-    {id:3,name:"iRemove Tool A12+ Instant API",price:160000,desc:"iOS 18.6–26.1 • Mac & Win • Instant"},
-    {id:4,name:"Mina A12–M4 Bypass No Signal",price:210000,desc:"iOS 18.6–26.0.1 • All A12–M4"},
-    {id:5,name:"FRPFILE Activator A12+ Hello Screen",price:90000,desc:"iPhone XR–17 Pro Max & iPad A12–M3"}
-  ];
-
-  let currentUser = null;
-  let lastOrderCount = 0;
-  let lastTopupCount = 0;
-  const ding = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3');
-
-  const $ = s => document.querySelector(s);
   document.getElementById('loader').remove();
 
-  function copyCode(code){navigator.clipboard.writeText(code);alert('Đã copy mã đơn: '+code);}
+  const ding = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3');
+  const $ = s => document.querySelector(s);
+
+  let currentUser = null;
 
   async function loadUser(){
     const email = localStorage.getItem('userEmail');
@@ -132,31 +118,38 @@
     });
   }
 
+  function copyCode(code){navigator.clipboard.writeText(code);alert('Đã copy mã đơn: '+code);}
+
   function renderAll(){
     const u = currentUser;
     $('#status').textContent = u ? u.email + (u.email==='998822jj'?' (Admin)': '') : 'Chưa đăng nhập';
     $('#status').style.color = u?.email==='998822jj' ? '#ff0066' : '#00ff9d';
-    $('#authBtn').textContent = u ? 'Đăng xuất' : 'Đăng nhập';
-    $('#emailShow').textContent = u ? u.email : 'Đăng nhập để xem';
-    $('#topupBtn').disabled = !u;
-    $('#balance').textContent = (u?.balance||0).toLocaleString();
-    $('#adminPanel').style.display = u?.email==='998822jj' ? 'block' : 'none';
+    $('#authBtn').textContent = 'Đăng xuất';
+    $('#adminLink').style.display = u?.email==='998822jj' ? 'inline' : 'none';
+    $('#emailShow').textContent = u.email;
+    $('#topupBtn').disabled = false;
+    $('#balance').textContent = (u.balance||0).toLocaleString();
 
-    $('#products').innerHTML = PRODUCTS.map(p=>`
-      <div class="product">
-        <h3>${p.name}</h3><p>${p.desc}</p>
-        <div class="price">${p.price.toLocaleString()}₫</div>
-        <button class="btn btn-buy" onclick="buy(${p.id})">MUA NGAY</button>
-      </div>
-    `).join('');
+    // Load sản phẩm từ Firebase
+    onValue(ref(db,'products'),snap=>{
+      const prods = snap.val() || {};
+      $('#products').innerHTML = Object.values(prods).map(p=>`
+        <div class="product">
+          <h3>${p.name}</h3><p>${p.desc}</p>
+          <div class="price">${p.price.toLocaleString()}₫</div>
+          <button class="btn btn-buy" onclick="buy('${p.name}',${p.price})">MUA NGAY</button>
+        </div>
+      `).join('');
+    },{onlyOnce:false});
 
-    const tbody = $('#tbody'); tbody.innerHTML = '';
-    if(u?.orders && Object.keys(u.orders).length){
+    // Lịch sử đơn
+    if(u.orders && Object.keys(u.orders).length){
       $('#history').style.display = 'block';
+      $('#tbody').innerHTML = '';
       Object.values(u.orders).reverse().forEach(o=>{
         const status = o.status==='success'?'DONE':(o.status==='refunded'?'HOÀN':'PENDING');
         const color = o.status==='success'?'#00ff9d':(o.status==='refunded'?'#ff6b6b':'#ffaa00');
-        tbody.innerHTML += `<tr>
+        $('#tbody').innerHTML += `<tr>
           <td><code class="order-code" onclick="copyCode('${o.id}')">${o.id}</code></td>
           <td>${o.product}</td>
           <td>${o.price.toLocaleString()}</td>
@@ -168,55 +161,45 @@
     }
   }
 
-  // Realtime + âm thanh
-  onValue(ref(db,'pendingOrders'),snap=>{
-    const count = snap.val()?Object.keys(snap.val()).length:0;
-    if(count > lastOrderCount && lastOrderCount > 0){
-      alert(`CÓ ${count-lastOrderCount} ĐƠN HÀNG MỚI!`);
-      ding.play();
-    }
-    lastOrderCount = count;
-    if(currentUser?.email==='998822jj') renderPendingOrders(snap.val()||{});
-  });
+  window.buy = (name, price) => {
+    if((currentUser.balance||0) < price) return alert('Không đủ tiền!');
+    $('#modalInner').innerHTML = `<h3 style="color:#00ff9d">Mua ${name}</h3>
+      <input id="seri" placeholder="Nhập Serial Number" style="width:100%;padding:14px;margin:12px 0;border-radius:12px;background:#000;color:#fff">
+      <button class="btn" onclick="confirmBuy('${name}',${price})">Gửi đơn</button>
+      <button class="btn" style="background:#666;margin-left:8px" onclick="closeModal()">Hủy</button>`;
+    $('#modalRoot').style.display = 'flex';
+  };
 
-  onValue(ref(db,'pendingTopups'),snap=>{
-    const count = snap.val()?Object.keys(snap.val()).length:0;
-    if(count > lastTopupCount && lastTopupCount > 0){
-      alert(`CÓ ${count-lastTopupCount} YÊU CẦU NẠP MỚI!`);
-      ding.play();
-    }
-    lastTopupCount = count;
-    if(currentUser?.email==='998822jj') renderPendingTopups(snap.val()||{});
-  });
+  window.confirmBuy = async (name, price) => {
+    const seri = $('#seri').value.trim();
+    if(!seri) return alert('Nhập SN!');
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let orderCode = '';
+    for(let i=0;i<12;i++) orderCode += chars.charAt(Math.floor(Math.random()*chars.length));
+    const orderId = orderCode;
 
-  function renderPendingOrders(orders){
-    let html = `<h3 style="color:#ffaa00">Đơn chờ xử lý (${Object.keys(orders).length})</h3>`;
-    Object.values(orders).forEach(o=>{
-      html += `<div class="admin-item">
-        <b>Mã đơn:</b> <code class="order-code" onclick="copyCode('${o.orderId}')">${o.orderId}</code><br>
-        <b>${o.email}</b> – ${o.product} – ${o.price.toLocaleString()}₫ – SN: <code>${o.seri}</code><br>${o.date}
-        <button class="btn" style="background:#00ff9d;color:#000;margin:8px 4px 0 0" onclick="adminSuccess('${o.orderId}','${o.email}')">SUCCESS</button>
-        <button class="btn" style="background:#ff0066" onclick="adminRefund('${o.orderId}','${o.email}',${o.price})">HOÀN TIỀN</button>
-      </div>`;
-    });
-    $('#adminOrders').innerHTML = html;
-  }
+    await set(ref(db,'pendingOrders/'+orderId),{orderId,email:currentUser.email,product:name,price,seri,date:new Date().toLocaleString('vi-VN')});
+    await set(ref(db,'users/'+btoa(currentUser.email)+'/balance'),(currentUser.balance||0)-price);
+    await push(ref(db,'users/'+btoa(currentUser.email)+'/orders'),{id:orderId,product:name,price,seri,status:'pending',date:new Date().toLocaleString('vi-VN')});
 
-  // Các hàm còn lại (buy, confirmBuy, topup, adminSuccess...) giữ nguyên như file bạn gửi
-  // (đã có mã đơn 12 ký tự + tất cả logic Firebase)
+    alert(`ĐÃ GỬI ĐƠN!\nMã đơn: ${orderId}\nLưu lại để theo dõi nhé!`);
+    closeModal();
+  };
 
-  window.buy = async (id) => { /* giữ nguyên */ };
-  window.confirmBuy = async (id, name, price) => { /* giữ nguyên phần tạo mã 12 ký tự + lưu đơn */ };
-  $('#topupBtn').onclick = async () => { /* giữ nguyên */ };
-  window.adminSuccess = async (orderId, email) => { /* giữ nguyên */ };
-  window.adminRefund = async (orderId, email, price) => { /* giữ nguyên */ };
-  window.approveTopup = async (id, email, amount) => { /* giữ nguyên */ };
+  $('#topupBtn').onclick = async () => {
+    const amount = parseInt($('#topupAmount').value);
+    if(amount<10000) return alert('Tối thiểu 10k');
+    const id = 'TP'+Date.now();
+    await set(ref(db,'pendingTopups/'+id),{id,email:currentUser.email,amount,date:new Date().toLocaleString('vi-VN')});
+    alert('Đã gửi yêu cầu nạp! Chờ admin duyệt.');
+    $('#topupAmount').value='';
+  };
 
-  $('#authBtn').onclick = () => location.href='index.html';
+  $('#authBtn').onclick = () => { if(confirm('Đăng xuất?')){localStorage.removeItem('userEmail');location.href='index.html';} };
   window.closeModal = () => $('#modalRoot').style.display='none';
 
   loadUser();
-  setInterval(()=>{if(currentUser) loadUser();}, 5000); // Auto refresh số dư
+  setInterval(()=>{if(currentUser)loadUser();},5000);
 </script>
 </body>
 </html>
