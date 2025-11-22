@@ -6,23 +6,29 @@
   <title>ADMIN PANEL - iBYPASS SHOP</title>
   <style>
     body{margin:0;background:#0a0a0f;color:#e0e7ff;font-family:Segoe UI,sans-serif;padding:20px}
+    h1{color:#00ff9d;text-align:center;font-size:40px;margin:10px}
     .card{background:#111118;border:2px solid #00ff9d;border-radius:18px;padding:25px;margin:20px 0}
-    h1{color:#00ff9d;text-align:center;font-size:40px}
-    table{width:100%;border-collapse:collapse;margin:20px 0}
-    th,td{padding:14px;text-align:center;border-bottom:1px solid #333}
+    table{width:100%;border-collapse:collapse;margin:15px 0}
+    th,td{padding:12px;text-align:center;border-bottom:1px solid #333}
     th{background:#00ff9d;color:#000;font-weight:900}
-    .btn{background:#00ff9d;color:#000;padding:10px 20px;border:none;border-radius:12px;cursor:pointer;font-weight:700}
+    .btn{background:#00ff9d;color:#000;padding:10px 20px;border:none;border-radius:12px;cursor:pointer;font-weight:700;margin:5px}
     .btn-danger{background:#ff0066}
-    .new{background:#300;border:3px solid #ff6b6b !important;animation:glow 1.5s infinite}
-    @keyframes glow{0%,100%{box-shadow:0 0 10px #ff6b6b}50%{box-shadow:0 0 30px #ff6b6b}}
-    .noti{position:fixed;top:20px;right:20px;background:#ff0066;color:#fff;padding:15px 25px;border-radius:50px;font-size:20px;font-weight:900;z-index:999}
-    audio{display:none}
+    .new{background:#300;border-left:5px solid #ff0066;animation:glow 2s infinite}
+    @keyframes glow{0%,100%{box-shadow:0 0 10px #ff0066}50%{box-shadow:0 0 25px #ff0066}
+    .noti{position:fixed;top:15px;right:15px;background:#ff0066;color:#fff;padding:12px 22px;border-radius:50px;font-size:18px;font-weight:900;z-index:999;box-shadow:0 0 20px #ff0066}
+    input{padding:12px;border-radius:12px;background:#000;color:#fff;border:1px solid #333;margin:5px;width:calc(33% - 20px)}
+    @media(max-width:768px){input{width:100%;margin:8px 0}}
   </style>
 </head>
 <body>
 
-<h1>ADMIN PANEL - iBYPASS SHOP</h1>
-<div id="noti" class="noti" style="display:none">0</div>
+<h1>ADMIN PANEL</h1>
+<div id="noti" class="noti" style="display:none">0 MỚI</div>
+
+<div class="card">
+  <h2>YÊU CẦU NẠP TIỀN (<span id="topupCount">0</span>)</h2>
+  <div id="topupsBody"></div>
+</div>
 
 <div class="card">
   <h2>ĐƠN HÀNG CHỜ XỬ LÝ (<span id="orderCount">0</span>)</h2>
@@ -30,94 +36,116 @@
 </div>
 
 <div class="card">
-  <h2>YÊU CẦU NẠP TIỀN CHỜ DUYỆT (<span id="topupCount">0</span>)</h2>
-  <div id="topupsBody"></div>
+  <h2>QUẢN LÝ SẢN PHẨM</h2>
+  <input id="pName" placeholder="Tên sản phẩm">
+  <input id="pPrice" type="number" placeholder="Giá tiền (VNĐ)">
+  <input id="pDesc" placeholder="Mô tả ngắn">
+  <button class="btn" onclick="addProduct()">THÊM MỚI</button>
+  <div id="productList" style="margin-top:20px"></div>
 </div>
 
 <audio id="ding" src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3" preload="auto"></audio>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, onValue, remove, runTransaction } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+  import { getDatabase, ref, onValue, remove, set, push, runTransaction } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-  const app = initializeApp({
-    apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4",
-    authDomain: "mokhoacloud.firebaseapp.com",
-    databaseURL: "https://mokhoacloud-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "mokhoacloud"
-  });
+  const app = initializeApp({ apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4", authDomain: "mokhoacloud.firebaseapp.com", databaseURL: "https://mokhoacloud-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mokhoacloud" });
   const db = getDatabase(app);
   const ding = document.getElementById('ding');
   const noti = document.getElementById('noti');
 
-  // Chỉ admin mới vào được
-  if (localStorage.getItem('userEmail') !== '998822jj') {
+  if (localStorage.getItem('userEmail') !== '998822jj@gmail.com' && localStorage.getItem('userEmail') !== '998822jj') {
     alert('Chỉ admin mới vào được!');
     location.href = 'index.html';
   }
 
   let lastTotal = 0;
 
-  // === ĐƠN HÀNG CHỜ ===
-  onValue(ref(db, 'pendingOrders'), snap => {
-    const data = snap.val() || {};
-    const keys = Object.keys(data);
-    document.getElementById('orderCount').textContent = keys.length;
-    document.getElementById('ordersBody').innerHTML = keys.map(key => {
-      const o = data[key];
-      return `<div class="new" style="padding:15px;margin:10px 0;background:#200;border-radius:12px">
-        <strong>${o.orderId}</strong> | ${o.email} | ${o.product} | Serial: ${o.seri} | ${o.price.toLocaleString()}₫ | ${o.date}
-        <button class="btn" style="float:right" onclick="done('${key}','${o.email}','${o.orderId}')">HOÀN TẤT</button>
-      </div>`;
-    }).join('') || '<p>Không có đơn nào</p>';
-    updateNoti();
-  });
-
-  // === NẠP TIỀN CHỜ DUYỆT ===
+  // Nạp tiền
   onValue(ref(db, 'pendingTopups'), snap => {
     const data = snap.val() || {};
     const keys = Object.keys(data);
-    document.getElementById('topupCount').textContent = keys.length;
-    document.getElementById('topupsBody').innerHTML = keys.map(key => {
-      const t = data[key];
-      return `<div class="new" style="padding:15px;margin:10px 0;background:#200;border-radius:12px">
-        <strong>${t.id}</strong> | ${t.email} | ${t.amount.toLocaleString()}₫ | ${t.date}
-        <button class="btn" style="float:right" onclick="duyet('${key}','${t.email}',${t.amount})">DUYỆT NGAY</button>
+    $('#topupCount').textContent = keys.length;
+    $('#topupsBody').innerHTML = keys.map(k => {
+      const t = data[k];
+      return `<div class="new" style="padding:15px;margin:10px 0;background:#111;border-radius:12px">
+        <strong>${t.id}</strong> — ${t.email} — <b>${t.amount.toLocaleString()}₫</b> — ${t.date}
+        <button class="btn" style="float:right" onclick="duyet('${k}','${t.email}',${t.amount})">DUYỆT</button>
       </div>`;
-    }).join('') || '<p>Không có yêu cầu nạp nào</p>';
+    }).join('') || '<p style="text-align:center;color:#666">Không có yêu cầu nào</p>';
     updateNoti();
   });
 
-  // Hàm duyệt nạp tiền – FIX 100%
+  // Đơn hàng
+  onValue(ref(db, 'pendingOrders'), snap => {
+    const data = snap.val() || {};
+    const keys = Object.keys(data);
+    $('#orderCount').textContent = keys.length;
+    $('#ordersBody').innerHTML = keys.map(k => {
+      const o = data[k];
+      return `<div class="new" style="padding:15px;margin:10px 0;background:#111;border-radius:12px">
+        <strong>${o.orderId}</strong> — ${o.email} — ${o.product} — Serial: ${o.seri} — ${o.price.toLocaleString()}₫ — ${o.date}
+        <button class="btn" style="float:right" onclick="done('${k}','${o.email}','${o.orderId}')">HOÀN TẤT</button>
+      </div>`;
+    }).join('') || '<p style="text-align:center;color:#666">Không có đơn nào</p>';
+    updateNoti();
+  });
+
+  // Quản lý sản phẩm – HOÀN CHỈNH
+  onValue(ref(db, 'products'), snap => {
+    const prods = snap.val() || {};
+    $('#productList').innerHTML = Object.keys(prods).map(key => {
+      const p = prods[key];
+      return `<div style="padding:18px;margin:12px 0;background:#000;border:1px solid #333;border-radius:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">
+        <div><b>${p.name}</b><br><small>${p.desc}</small><br><b>${p.price.toLocaleString()}₫</b></div>
+        <button class="btn btn-danger" onclick="xoa('${key}')">XÓA</button>
+      </div>`;
+    }).join('');
+  });
+
+  // Hàm thêm sản phẩm
+  window.addProduct = () => {
+    const name = $('#pName').value.trim();
+    const price = parseInt($('#pPrice').value);
+    const desc = $('#pDesc').value.trim();
+    if (!name || !price || !desc) return alert('Điền đầy đủ thông tin!');
+    push(ref(db, 'products'), {name, price, desc});
+    $('#pName').value = $('#pPrice').value = $('#pDesc').value = '';
+    alert('Đã thêm sản phẩm mới!');
+  };
+
+  // Xóa sản phẩm
+  window.xoa = key => confirm('Xóa sản phẩm này thật chứ?') && remove(ref(db, 'products/' + key));
+
+  // Duyệt nạp tiền – FIX 100%
   window.duyet = async (key, email, amount) => {
     if (!confirm(`Duyệt nạp ${amount.toLocaleString()}₫ cho ${email}?`)) return;
-    
-    const balanceRef = ref(db, 'users/' + btoa(email) + '/balance');
-    await runTransaction(balanceRef, current => (current || 0) + amount);
-    
+    await runTransaction(ref(db, 'users/' + btoa(email) + '/balance'), cur => (cur || 0) + amount);
     await remove(ref(db, 'pendingTopups/' + key));
-    alert('ĐÃ DUYỆT THÀNH CÔNG! Tiền đã vào tài khoản khách ngay lập tức.');
+    alert('ĐÃ DUYỆT – TIỀN VÀO NGAY!');
   };
 
-  // Hoàn tất đơn hàng
+  // Hoàn tất đơn
   window.done = async (key, email, orderId) => {
-    if (!confirm('Hoàn tất đơn này?')) return;
+    if (!confirm('Hoàn tất đơn này nhé?')) return;
     await set(ref(db, 'users/' + btoa(email) + '/orders/' + orderId + '/status'), 'success');
     await remove(ref(db, 'pendingOrders/' + key));
-    alert('Đã hoàn tất đơn ' + orderId);
+    alert('ĐÃ HOÀN TẤT ĐƠN!');
   };
 
-  // Thông báo + âm thanh
   function updateNoti() {
-    const total = parseInt(document.getElementById('orderCount').textContent) + parseInt(document.getElementById('topupCount').textContent);
+    const total = parseInt($('#topupCount').textContent) + parseInt($('#orderCount').textContent);
     if (total > lastTotal && total > 0) {
       ding.play();
       noti.textContent = total + ' MỚI!';
       noti.style.display = 'block';
     }
-    lastTotal = total;
     if (total === 0) noti.style.display = 'none';
+    lastTotal = total;
   }
+
+  const $ = s => document.querySelector(s);
 </script>
 </body>
 </html>
