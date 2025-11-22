@@ -2,141 +2,137 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>ADMIN PANEL - iBYPASS SHOP</title>
-  <meta name="theme-color" content="#ff0066">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>Shield</text></svg>">
   <style>
-    :root{--pri:#ff0066;--bg:#0a0a0f;--card:#111118}
-    body{margin:0;font-family:Segoe UI,sans-serif;background:var(--bg);color:#e0e7ff;min-height:100vh}
-    header{position:sticky;top:0;z-index:99;background:rgba(10,10,15,0.95);backdrop-filter:blur(12px);border-bottom:2px solid var(--pri);padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
-    .logo{font-size:32px;font-weight:900;background:linear-gradient(90deg,#ff0066,#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .container{max-width:1200px;margin:0 auto;padding:20px}
-    .card{background:var(--card);border:1px solid rgba(255,0,102,0.3);border-radius:18px;padding:28px;margin-bottom:24px;box-shadow:0 10px 40px #0006}
-    .btn{background:linear-gradient(90deg,#ff0066,#ff6b6b);color:#fff;padding:12px 24px;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin:5px}
-    .btn-green{background:linear-gradient(90deg,#00ff9d,#00d4ff);color:#000}
-    input,textarea{width:100%;padding:12px;margin:8px 0;border-radius:10px;background:#000;color:#fff;border:1px solid #444}
-    table{width:100%;border-collapse:collapse;margin-top:20px}
-    th,td{padding:14px;border-bottom:1px solid #333;text-align:left}
-    th{background:rgba(255,0,102,0.2)}
-    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:30px}
-    .stat-card{background:rgba(255,0,102,0.1);border:1px solid var(--pri);padding:20px;border-radius:16px;text-align:center}
+    body{margin:0;background:#0a0a0f;color:#e0e7ff;font-family:Segoe UI,sans-serif;padding:20px}
+    .card{background:#111118;border:2px solid #00ff9d;border-radius:18px;padding:25px;margin:20px 0;box-shadow:0 0 30px #00ff9d33}
+    h1{color:#00ff9d;text-align:center;font-size:40px;margin:0}
+    table{width:100%;border-collapse:collapse;margin:20px 0}
+    th,td{padding:14px;text-align:center;border-bottom:1px solid #333}
+    th{background:#00ff9d;color:#000;font-weight:900}
+    .btn{background:#00ff9d;color:#000;padding:10px 20px;border:none;border-radius:12px;cursor:pointer;font-weight:700}
+    .btn-danger{background:#ff0066}
+    .new{background:#300;border:3px solid #ff0066 !important;animation:blink 1s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.6}}
+    .noti-count{position:fixed;top:20px;right:20px;background:#ff0066;color:#fff;padding:10px 20px;border-radius:50px;font-size:20px;font-weight:900;z-index:999;box-shadow:0 0 20px #ff0066}
+    audio{display:none}
   </style>
 </head>
 <body>
 
-<header>
-  <div><span class="logo">ADMIN PANEL</span></div>
-  <div>
-    <span style="color:#ff6b6b;font-weight:700">998822jj</span>
-    <button class="btn" onclick="localStorage.removeItem('userEmail');location.href='index.html'">Đăng xuất</button>
-  </div>
-</header>
+<h1>ADMIN PANEL</h1>
+<div id="notiCount" class="noti-count" style="display:none">0</div>
 
-<div class="container">
-
-  <div class="stats">
-    <div class="stat-card"><h3>Đơn chờ</h3><h2 id="pendingCount">0</h2></div>
-    <div class="stat-card"><h3>Nạp chờ</h3><h2 id="topupCount">0</h2></div>
-  </div>
-
-  <div class="card">
-    <h2 style="color:var(--pri)">THÊM / SỬA SẢN PHẨM</h2>
-    <input id="newName" placeholder="Tên sản phẩm">
-    <input id="newPrice" type="number" placeholder="Giá (VNĐ)">
-    <textarea id="newDesc" rows="3" placeholder="Mô tả"></textarea>
-    <button class="btn btn-green" style="width:100%" onclick="addProduct()">THÊM SẢN PHẨM</button>
-
-    <table id="productTable">
-      <thead><tr><th>Tên</th><th>Giá</th><th>Mô tả</th><th>Hành động</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <div class="card"><h2 style="color:#ffaa00">ĐƠN HÀNG CHỜ</h2><div id="adminOrders"></div></div>
-  <div class="card"><h2 style="color:#00d4ff">NẠP TIỀN CHỜ</h2><div id="adminTopups"></div></div>
+<div class="card">
+  <h2>ĐƠN HÀNG CHỜ XỬ LÝ</h2>
+  <table><thead><tr><th>Mã đơn</th><th>Email</th><th>Sản phẩm</th><th>Serial</th><th>Giá</th><th>Thời gian</th><th>Hoàn tất</th></tr></thead><tbody id="ordersBody"></tbody></table>
 </div>
+
+<div class="card">
+  <h2>YÊU CẦU NẠP TIỀN MỚI</h2>
+  <table><thead><tr><th>ID</th><th>Email</th><th>Số tiền</th><th>Thời gian</th><th>Duyệt</th></tr></thead><tbody id="topupsBody"></tbody></table>
+</div>
+
+<div class="card">
+  <h2>QUẢN LÝ SẢN PHẨM</h2>
+  <input id="pName" placeholder="Tên sản phẩm" style="width:30%;padding:12px;margin:5px;border-radius:12px;background:#000;color:#fff">
+  <input id="pPrice" type="number" placeholder="Giá" style="width:20%;padding:12px;margin:5px;border-radius:12px;background:#000;color:#fff">
+  <input id="pDesc" placeholder="Mô tả" style="width:40%;padding:12px;margin:5px;border-radius:12px;background:#000;color:#fff">
+  <button class="btn" onclick="addProduct()">THÊM SẢN PHẨM</button>
+  <div id="productList"></div>
+</div>
+
+<audio id="ding" src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3" preload="auto"></audio>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, set, get, push, remove, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+  import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-  const firebaseConfig = { /* giữ nguyên config */ 
+  const app = initializeApp({
     apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4",
     authDomain: "mokhoacloud.firebaseapp.com",
     databaseURL: "https://mokhoacloud-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "mokhoacloud",
-    storageBucket: "mokhoacloud.firebasestorage.app",
-    messagingSenderId: "1013749304224",
-    appId: "1:1013749304224:web:2a02b904c17c0aaf7c32c5"
-  };
-
-  const app = initializeApp(firebaseConfig);
+    projectId: "mokhoacloud"
+  });
   const db = getDatabase(app);
+  const ding = document.getElementById('ding');
+  const notiCount = document.getElementById('notiCount');
 
-  if(localStorage.getItem('userEmail') !== '998822jj'){
-    alert('Access Denied!'); location.href='index.html';
+  // Chỉ admin 998822jj mới vào được
+  if (localStorage.getItem('userEmail') !== '998822jj') {
+    alert('Chỉ admin mới vào được!');
+    location.href = 'index.html';
   }
 
-  const ding = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3');
-
-  // Quản lý sản phẩm
-  onValue(ref(db,'products'),snap=>{
-    const data = snap.val()||{};
-    const tbody = document.querySelector('#productTable tbody');
-    tbody.innerHTML = '';
-    Object.keys(data).forEach(k=>{
-      const p = data[k];
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${p.name}</td>
-        <td><input type="number" value="${p.price}" onchange="set(ref(db,'products/${k}/price'),+this.value)"></td>
-        <td><textarea onchange="set(ref(db,'products/${k}/desc'),this.value)">${p.desc}</textarea></td>
-        <td><button class="btn" style="background:#ff0066" onclick="remove(ref(db,'products/${k}'))">XÓA</button></td>`;
-      tbody.appendChild(tr);
-    });
+  // === 1. ĐƠN HÀNG CHỜ ===
+  onValue(ref(db, 'pendingOrders'), snap => {
+    const orders = snap.val() || {};
+    const html = Object.keys(orders).map(key => {
+      const o = orders[key];
+      return `<tr class="new"><td>${o.orderId}</td><td>${o.email}</td><td>${o.product}</td><td>${o.seri}</td><td>${o.price.toLocaleString()}₫</td><td>${o.date}</td>
+        <td><button class="btn" onclick="doneOrder('${key}','${o.email}','${o.orderId}')">HOÀN TẤT</button></td></tr>`;
+    }).join('');
+    document.getElementById('ordersBody').innerHTML = html || '<tr><td colspan="7">Không có đơn nào</td></tr>';
+    updateNoti(Object.keys(orders).length);
   });
+
+  // === 2. NẠP TIỀN CHỜ DUYỆT ===
+  onValue(ref(db, 'pendingTopups'), snap => {
+    const topups = snap.val() || {};
+    const html = Object.keys(topups).map(key => {
+      const t = topups[key];
+      return `<tr class="new"><td>${t.id}</td><td>${t.email}</td><td>${t.amount.toLocaleString()}₫</td><td>${t.date}</td>
+        <td><button class="btn" onclick="approveTopup('${key}','${t.email}',${t.amount})">DUYỆT</button></td></tr>`;
+    }).join('');
+    document.getElementById('topupsBody').innerHTML = html || '<tr><td colspan="5">Không có yêu cầu nào</td></tr>';
+  });
+
+  // === 3. QUẢN LÝ SẢN PHẨM ===
+  onValue(ref(db, 'products'), snap => {
+    const prods = snap.val() || {};
+    document.getElementById('productList').innerHTML = Object.keys(prods).map(key => 
+      `<div style="margin:15px 0;padding:15px;background:#111;border:1px solid #00ff9d;border-radius:12px">
+        <strong>${prods[key].name}</strong> – ${prods[key].price.toLocaleString()}₫<br>${prods[key].desc}
+        <button class="btn btn-danger" style="float:right" onclick="delProd('${key}')">XÓA</button>
+      </div>`
+    ).join('');
+  });
+
+  window.doneOrder = (key, email, orderId) => {
+    if (!confirm('Hoàn tất đơn này?')) return;
+    set(ref(db, 'users/'+btoa(email)+'/orders/'+orderId+'/status'), 'success');
+    remove(ref(db, 'pendingOrders/'+key));
+    alert('Đã hoàn tất đơn ' + orderId);
+  };
+
+  window.approveTopup = async (key, email, amount) => {
+    if (!confirm(`Duyệt nạp ${amount.toLocaleString()}₫ cho ${email}?`)) return;
+    const userRef = ref(db, 'users/'+btoa(email)+'/balance');
+    await runTransaction(userRef, v => (v||0) + amount);
+    remove(ref(db, 'pendingTopups/'+key));
+    alert('Đã duyệt nạp thành công!');
+  };
 
   window.addProduct = () => {
     const name = prompt('Tên sản phẩm:');
-    const price = +prompt('Giá tiền:');
+    const price = parseInt(prompt('Giá tiền:'));
     const desc = prompt('Mô tả:');
-    if(name && price) push(ref(db,'products'),{name,price,desc});
+    if (name && price && desc) push(ref(db, 'products'), {name, price, desc});
   };
 
-  // Đơn chờ + âm thanh
-  onValue(ref(db,'pendingOrders'),snap=>{
-    const count = snap.val()?Object.keys(snap.val()).length:0;
-    $('#pendingCount').textContent = count;
-    if(count > +($('#pendingCount').dataset.last||0)) ding.play();
-    $('#pendingCount').dataset.last = count;
+  window.delProd = key => confirm('Xóa sản phẩm này?') && remove(ref(db, 'products/'+key));
 
-    let html = '';
-    Object.values(snap.val()||{}).forEach(o=>{
-      html += `<div style="background:#300;padding:16px;margin:10px 0;border-radius:12px">
-        <b>Mã:</b> <code style="cursor:pointer" onclick="navigator.clipboard.writeText('${o.orderId}');alert('Copied!')">${o.orderId}</code><br>
-        ${o.email} – ${o.product} – ${o.price.toLocaleString()}₫ – SN: ${o.seri}<br>${o.date}
-        <button class="btn btn-green" onclick="success('${o.orderId}','${o.email}')">SUCCESS</button>
-        <button class="btn" onclick="refund('${o.orderId}','${o.email}',${o.price})">HOÀN</button>
-      </div>`;
-    });
-    $('#adminOrders').innerHTML = html||'<i>Không có đơn</i>';
-  });
-
-  onValue(ref(db,'pendingTopups'),snap=>{
-    $('#topupCount').textContent = Object.keys(snap.val()||{}).length;
-    let html = '';
-    Object.values(snap.val()||{}).forEach(t=>{
-      html += `<div style="background:#003;padding:16px;margin:10px 0;border-radius:12px">
-        ${t.email} nạp ${t.amount.toLocaleString()}₫ – ${t.date}
-        <button class="btn btn-green" onclick="approve('${t.id}','${t.email}',${t.amount})">DUYỆT</button>
-      </div>`;
-    });
-    $('#adminTopups').innerHTML = html||'<i>Không có nạp</i>';
-  });
-
-  window.success = (id,email) => { remove(ref(db,'pendingOrders/'+id)); alert('SUCCESS!'); };
-  window.refund = async (id,email,price) => { if(confirm('Hoàn tiền?')){ remove(ref(db,'pendingOrders/'+id)); const s=await get(ref(db,'users/'+btoa(email)+'/balance')); set(ref(db,'users/'+btoa(email)+'/balance'),(s.val()||0)+price); } };
-  window.approve = async (id,email,amount) => { remove(ref(db,'pendingTopups/'+id)); const s=await get(ref(db,'users/'+btoa(email)+'/balance')); set(ref(db,'users/'+btoa(email)+'/balance'),(s.val()||0)+amount); alert('Đã duyệt!'); };
+  // Thông báo + âm thanh khi có đơn mới hoặc nạp mới
+  let lastCount = 0;
+  function updateNoti(count) {
+    if (count > lastCount) {
+      ding.play();
+      notiCount.textContent = count;
+      notiCount.style.display = 'block';
+    }
+    lastCount = count;
+  }
 </script>
 </body>
 </html>
