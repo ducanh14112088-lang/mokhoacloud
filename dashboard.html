@@ -27,7 +27,7 @@
     .spinner{width:60px;height:60px;border:6px solid #333;border-top:6px solid #00ff9d;border-radius:50%;animation:s 1s linear infinite;margin-top:20px}
     @keyframes s{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
     .backtop{position:fixed;bottom:20px;right:20px;background:#00ff9d;color:#000;padding:15px 18px;border:none;border-radius:50%;font-size:24px;box-shadow:0 4px 20px #00ff9d88;z-index:99;cursor:pointer}
-    .telegram-btn{position:fixed;bottom:20px;left:20px;background:#0088cc;color:white;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 4px 20px #0088cc88;z-index:999}
+    .telegram-btn{position:fixed;bottom:20px;left:20px;background:#0088cc;color:white;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px #0088cc88;z-index:999}
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:999}
     .modal{max-width:500px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri)}
   </style>
@@ -43,13 +43,13 @@
     <a href="dashboard.html">Cửa hàng</a>
     <a href="admin.html" id="adminLink" style="display:none;color:#ff0066;font-weight:700">ADMIN PANEL</a>
     <span id="status">Chưa đăng nhập</span>
-    <button class="btn" id="authBtn">Đăng nhập</button>
+    <button class="btn" id="authBtn">Đăng xuất</button>
   </nav>
 </header>
 
 <div class="container">
   <div class="card" style="text-align:center">
-    <h1 style="color:#00ff9d;font-size:36px;margin:0">Số dư: <span id="balance">0</span> VND</h1>
+    <h1 style="color:#00ff9d;font-size:36px;margin:0">Số dư: <span id="balance">0</span> ₫</h1>
   </div>
 
   <div class="card warning">
@@ -78,12 +78,20 @@
 </div>
 
 <button class="backtop" onclick="scrollTo(0,0)">Up</button>
-<a href="https://t.me/dung_tool_wallet" target="_blank" class="telegram-btn">Telegram</a>
-<div id="modalRoot" class="modal-backdrop"><div class="modal" id="modalInner"></div></div>
+
+<a href="https://t.me/dung_tool_wallet" target="_blank" class="telegram-btn" title="Liên hệ Telegram">
+  <svg viewBox="0 0 240.83 240.83" width="36" height="36" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+    <path d="M57.65 184.28c-12.48 0-4.03-9.05-4.03-9.05l120.35-74.03c8.06-5.02 8.06-3.35 8.06-3.35l-124.38-74.03s-16.51-8.06-16.51 8.06c0 8.06 6.04 36.24 12.08 67.99l18.12 60.94s1.01 12.08 12.08 12.08c12.08 0 25.16-13.09 25.16-13.09l36.24-24.16 66.98 49.86c15.1 8.06 25.16 4.03 25.16 4.03l18.12-153.92s18.12-18.12 0-25.16c-12.08-5.02-36.24 20.14-36.24 20.14l-145.51 93.19c-12.08 6.04-25.16 9.05-25.16 9.05z"/>
+  </svg>
+</a>
+
+<div id="modalRoot" class="modal-backdrop">
+  <div class="modal" id="modalInner"></div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, set, get, push, remove, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+  import { getDatabase, ref, set, get, push, remove, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4",
@@ -93,113 +101,141 @@
     storageBucket: "mokhoacloud.firebasestorage.app",
     messagingSenderId: "1013749304224",
     appId: "1:1013749304224:web:2a02b904c17c0aaf7c32c5"
- };
+  };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  if(!localStorage.getItem('userEmail')) location.href='index.html';
+  // Kiểm tra đăng nhập
+  if (!localStorage.getItem('userEmail')) location.href = 'index.html';
   document.getElementById('loader').remove();
+
+  // Tắt loading nếu treo quá 8s
+  setTimeout(() => document.getElementById('loader')?.remove(), 8000);
 
   const ding = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3');
   const $ = s => document.querySelector(s);
 
   let currentUser = null;
 
-  async function loadUser(){
-    const email = localStorage.getItem('userEmail');
-    if(!email) return;
-    const userRef = ref(db,'users/'+btoa(email));
-    onValue(userRef,snap=>{
-      if(snap.exists()){
-        currentUser = {...snap.val(),email};
-        renderAll();
-      }
-    });
-  }
+  // 5 sản phẩm cũ – sẽ tự động đẩy lên Firebase nếu chưa có
+  const defaultProducts = {
+    p1: {name: "Nothing PRO Bypass iPhone 11 → 17 Pro Max", price: 120000, desc: "iOS 18.6–26.1 • Full iCloud, Notification, FaceTime • Windows Tool"},
+    p2: {name: "HFZ Activator A12+ Premium Bypass", price: 120000, desc: "All iPhone/iPad • Full Notification, FaceTime • Windows"},
+    p3: {name: "iRemove Tool A12+ Instant API", price: 160000, desc: "iOS 18.6–26.1 • Mac & Win • Tốc độ Instant"},
+    p4: {name: "Mina A12–M4 Bypass No Signal", price: 210000, desc: "iOS 18.6–26.0.1 • All iPhone/iPad A12–M4"},
+    p5: {name: "FRPFILE Activator A12+ Hello Screen", price: 90000, desc: "iPhone XR–17 Pro Max & iPad A12–M3 • Full iCloud"}
+  };
 
-  function copyCode(code){navigator.clipboard.writeText(code);alert('Đã copy mã đơn: '+code);}
+  // Load user
+  onValue(ref(db, 'users/' + btoa(localStorage.getItem('userEmail'))), snap => {
+    if (snap.exists()) {
+      currentUser = { ...snap.val(), email: localStorage.getItem('userEmail') };
+      renderUI();
+    }
+  });
 
-  function renderAll(){
+  // Load sản phẩm + tự động tạo nếu trống
+  onValue(ref(db, 'products'), snap => {
+    let prods = snap.val();
+    if (!prods || Object.keys(prods).length === 0) {
+      set(ref(db, 'products'), defaultProducts);
+      prods = defaultProducts;
+    }
+    $('#products').innerHTML = Object.values(prods).map(p => `
+      <div class="product">
+        <h3>${p.name}</h3>
+        <p>${p.desc}</p>
+        <div class="price">${p.price.toLocaleString()}₫</div>
+        <button class="btn btn-buy" onclick="buy('${p.name}', ${p.price})">MUA NGAY</button>
+      </div>
+    `).join('');
+  });
+
+  function renderUI() {
     const u = currentUser;
-    $('#status').textContent = u ? u.email + (u.email==='998822jj'?' (Admin)': '') : 'Chưa đăng nhập';
-    $('#status').style.color = u?.email==='998822jj' ? '#ff0066' : '#00ff9d';
-    $('#authBtn').textContent = 'Đăng xuất';
-    $('#adminLink').style.display = u?.email==='998822jj' ? 'inline' : 'none';
+    $('#status').textContent = u.email + (u.email === '998822jj' ? ' (Admin)' : '');
+    $('#status').style.color = u.email === '998822jj' ? '#ff0066' : '#00ff9d';
+    $('#adminLink').style.display = u.email === '998822jj' ? 'inline' : 'none';
     $('#emailShow').textContent = u.email;
     $('#topupBtn').disabled = false;
-    $('#balance').textContent = (u.balance||0).toLocaleString();
-
-    // Load sản phẩm từ Firebase
-    onValue(ref(db,'products'),snap=>{
-      const prods = snap.val() || {};
-      $('#products').innerHTML = Object.values(prods).map(p=>`
-        <div class="product">
-          <h3>${p.name}</h3><p>${p.desc}</p>
-          <div class="price">${p.price.toLocaleString()}₫</div>
-          <button class="btn btn-buy" onclick="buy('${p.name}',${p.price})">MUA NGAY</button>
-        </div>
-      `).join('');
-    },{onlyOnce:false});
-
-    // Lịch sử đơn
-    if(u.orders && Object.keys(u.orders).length){
-      $('#history').style.display = 'block';
-      $('#tbody').innerHTML = '';
-      Object.values(u.orders).reverse().forEach(o=>{
-        const status = o.status==='success'?'DONE':(o.status==='refunded'?'HOÀN':'PENDING');
-        const color = o.status==='success'?'#00ff9d':(o.status==='refunded'?'#ff6b6b':'#ffaa00');
-        $('#tbody').innerHTML += `<tr>
-          <td><code class="order-code" onclick="copyCode('${o.id}')">${o.id}</code></td>
-          <td>${o.product}</td>
-          <td>${o.price.toLocaleString()}</td>
-          <td><code>${o.seri}</code></td>
-          <td style="color:${color}">${status}</td>
-          <td>${o.date}</td>
-        </tr>`;
-      });
-    }
+    $('#balance').textContent = (u.balance || 0).toLocaleString();
+    renderHistory();
   }
 
+  function renderHistory() {
+    if (!currentUser.orders || Object.keys(currentUser.orders).length === 0) return;
+    $('#history').style.display = 'block';
+    $('#tbody').innerHTML = Object.values(currentUser.orders).reverse().map(o => `
+      <tr>
+        <td><code class="order-code" onclick="navigator.clipboard.writeText('${o.id}');alert('Copied!')">${o.id}</code></td>
+        <td>${o.product}</td>
+        <td>${o.price.toLocaleString()}</td>
+        <td><code>${o.seri}</code></td>
+        <td style="color:${o.status==='success'?'#00ff9d':o.status==='refunded'?'#ff6b6b':'#ffaa00'}">
+          ${o.status==='success'?'DONE':o.status==='refunded'?'HOÀN':'PENDING'}
+        </td>
+        <td>${o.date}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Mua hàng
   window.buy = (name, price) => {
-    if((currentUser.balance||0) < price) return alert('Không đủ tiền!');
-    $('#modalInner').innerHTML = `<h3 style="color:#00ff9d">Mua ${name}</h3>
+    if ((currentUser.balance || 0) < price) return alert('Không đủ tiền!');
+    $('#modalInner').innerHTML = `
+      <h3 style="color:#00ff9d">Mua ${name}</h3>
       <input id="seri" placeholder="Nhập Serial Number" style="width:100%;padding:14px;margin:12px 0;border-radius:12px;background:#000;color:#fff">
-      <button class="btn" onclick="confirmBuy('${name}',${price})">Gửi đơn</button>
-      <button class="btn" style="background:#666;margin-left:8px" onclick="closeModal()">Hủy</button>`;
+      <button class="btn" onclick="confirmBuy('${name}', ${price})">Gửi đơn</button>
+      <button class="btn" style="background:#666;margin-left:8px" onclick="closeModal()">Hủy</button>
+    `;
     $('#modalRoot').style.display = 'flex';
   };
 
   window.confirmBuy = async (name, price) => {
     const seri = $('#seri').value.trim();
-    if(!seri) return alert('Nhập SN!');
+    if (!seri) return alert('Nhập SN!');
+    
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let orderCode = '';
-    for(let i=0;i<12;i++) orderCode += chars.charAt(Math.floor(Math.random()*chars.length));
-    const orderId = orderCode;
+    let orderId = '';
+    for (let i = 0; i < 12; i++) orderId += chars.charAt(Math.floor(Math.random() * chars.length));
 
-    await set(ref(db,'pendingOrders/'+orderId),{orderId,email:currentUser.email,product:name,price,seri,date:new Date().toLocaleString('vi-VN')});
-    await set(ref(db,'users/'+btoa(currentUser.email)+'/balance'),(currentUser.balance||0)-price);
-    await push(ref(db,'users/'+btoa(currentUser.email)+'/orders'),{id:orderId,product:name,price,seri,status:'pending',date:new Date().toLocaleString('vi-VN')});
+    await set(ref(db, 'pendingOrders/' + orderId), {
+      orderId, email: currentUser.email, product: name, price, seri,
+      date: new Date().toLocaleString('vi-VN')
+    });
+
+    await set(ref(db, 'users/' + btoa(currentUser.email) + '/balance'), (currentUser.balance || 0) - price);
+    await push(ref(db, 'users/' + btoa(currentUser.email) + '/orders'), {
+      id: orderId, product: name, price, seri, status: 'pending',
+      date: new Date().toLocaleString('vi-VN')
+    });
 
     alert(`ĐÃ GỬI ĐƠN!\nMã đơn: ${orderId}\nLưu lại để theo dõi nhé!`);
     closeModal();
   };
 
+  // Nạp tiền
   $('#topupBtn').onclick = async () => {
     const amount = parseInt($('#topupAmount').value);
-    if(amount<10000) return alert('Tối thiểu 10k');
-    const id = 'TP'+Date.now();
-    await set(ref(db,'pendingTopups/'+id),{id,email:currentUser.email,amount,date:new Date().toLocaleString('vi-VN')});
-    alert('Đã gửi yêu cầu nạp! Chờ admin duyệt.');
-    $('#topupAmount').value='';
+    if (!amount || amount < 10000) return alert('Tối thiểu 10.000₫');
+    const id = 'TP' + Date.now();
+    await set(ref(db, 'pendingTopups/' + id), {
+      id, email: currentUser.email, amount,
+      date: new Date().toLocaleString('vi-VN')
+    });
+    alert('Đã gửi yêu cầu nạp tiền! Chờ admin duyệt.');
+    $('#topupAmount').value = '';
   };
 
-  $('#authBtn').onclick = () => { if(confirm('Đăng xuất?')){localStorage.removeItem('userEmail');location.href='index.html';} };
-  window.closeModal = () => $('#modalRoot').style.display='none';
+  $('#authBtn').onclick = () => {
+    if (confirm('Đăng xuất?')) {
+      localStorage.removeItem('userEmail');
+      location.href = 'index.html';
+    }
+  };
 
-  loadUser();
-  setInterval(()=>{if(currentUser)loadUser();},5000);
+  window.closeModal = () => $('#modalRoot').style.display = 'none';
 </script>
 </body>
 </html>
