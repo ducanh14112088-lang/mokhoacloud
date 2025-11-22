@@ -4,11 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>iBYPASS SHOP - Cửa hàng</title>
-  <meta name="theme-color" content="#00ff9d">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>Unlock</text></svg>">
+  <meta name="theme neuen-color" content="#00ff9d">
   <style>
     :root{--pri:#00ff9d;--bg:#0a0a0f;--card:#111118;--warn:#ff6b6b}
-    body{margin:0;font-family:Segoe UI,sans-serif;background:var(--bg);color:#e0e7ff;min-height:100vh;position:relative}
+    body{margin:0;font-family:Segoe UI,sans-serif;background:var(--bg);color:#e0e7ff;min-height:100vh}
     header{position:sticky;top:0;z-index:99;background:rgba(10,10,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid #333;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
     .logo{font-size:30px;font-weight:900;background:linear-gradient(90deg,#00ff9d,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
     .online-badge{background:#00ff9d;color:#000;padding:4px 12px;border-radius:20px;font-size:12px;animation:blink 2s infinite;font-weight:900}
@@ -19,17 +18,16 @@
     .product{background:rgba(0,255,157,0.05);border:1px solid rgba(0,255,157,0.3);border-radius:16px;padding:24px;text-align:center;transition:.3s}
     .product:hover{transform:translateY(-8px);box-shadow:0 15px 30px rgba(0,255,157,0.2)}
     .price{font-size:32px;font-weight:900;color:#00ff9d}
-    .btn{background:linear-gradient(90deg,#00ff9d,#00d4ff);color:#000;padding:14px;border-radius:12px;font-weight:700;cursor:pointer}
+    .btn{background:linear-gradient(90deg,#00ff9d,#00d4ff);color:#000;padding:14px 32px;border-radius:12px;font-weight:700;cursor:pointer}
     .btn-buy{width:100%;padding:16px;font-size:18px}
     .warning{background:#300;border:2px solid var(--warn);padding:20px;border-radius:16px}
-    .order-code{font-size:20px;color:#00ff9d;background:#000;padding:6px 14px;border-radius:10px;font-weight:900;cursor:pointer}
     #loader{position:fixed;inset:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:#00ff9d;font-size:24px}
     .spinner{width:60px;height:60px;border:6px solid #333;border-top:6px solid #00ff9d;border-radius:50%;animation:s 1s linear infinite;margin-top:20px}
     @keyframes s{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-    .backtop{position:fixed;bottom:20px;right:20px;background:#00ff9d;color:#000;padding:15px 18px;border:none;border-radius:50%;font-size:24px;box-shadow:0 4px 20px #00ff9d88;z-index:99;cursor:pointer}
     .telegram-btn{position:fixed;bottom:20px;left:20px;background:#0088cc;color:white;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px #0088cc88;z-index:999}
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:999}
     .modal{max-width:500px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri);text-align:center}
+    .backtop{position:fixed;bottom:20px;right:20px;background:#00ff9d;color:#000;padding:15px 18px;border:none;border-radius:50%;font-size:24px;box-shadow:0 4px 20px #00ff9d88;z-index:99;cursor:pointer}
   </style>
 </head>
 <body>
@@ -41,7 +39,7 @@
   <nav>
     <a href="index.html">Trang chủ</a>
     <a href="dashboard.html">Cửa hàng</a>
-    <a href="admin.html" id="adminLink" style="display:none;color:#ff0066;font-weight:700;background:#300;padding:8px 16px;border-radius:12px">ADMIN PANEL</a>
+    <a href="admin.html" id="adminLink" style="display:none;background:#300;color:#ff0066;padding:8px 16px;border-radius:12px;font-weight:700">ADMIN PANEL</a>
     <span id="status">Chưa đăng nhập</span>
     <button class="btn" id="authBtn">Đăng xuất</button>
   </nav>
@@ -53,11 +51,10 @@
   </div>
 
   <div class="card warning">
-    <h2 style="color:var(--warn)">LƯU Ý CHUNG</h2>
+    <h2 style="color:var(--warn)">LƯU Ý</h2>
     <ul style="color:#ffaa00;line-height:2">
       <li>Tất cả dịch vụ KHÔNG CÓ SÓNG – chỉ dùng WiFi</li>
-      <li>Không hủy đơn, hoàn tiền nếu lỗi source > 48h</li>
-      <li>Tháo SIM + WiFi mạnh trước khi bypass</li>
+      <li>Không hoàn tiền nếu lỗi source > 48h</li>
     </ul>
   </div>
 
@@ -66,34 +63,34 @@
   <div class="card">
     <h2>Nạp tiền tự động 24/7</h2>
     <p>STK: <strong>1404123456</strong> – MB Bank – <strong>NGUYEN DUC ANH</strong></p>
-    <p>Nội dung: <code style="color:#00ff9d" id="emailShow">Đăng nhập để xem</code></p>
-    <input id="topupAmount" type="number" placeholder="Số tiền (VD: 100000)" style="padding:14px;margin:10px 0;width:100%;border-radius:12px;background:#000;color:#fff;border:1px solid #333">
-    <button class="btn" id="topupBtn" disabled>Tôi đã chuyển</button>
+    <p>Nội dung chuyển khoản: <code style="color:#00ff9d;font-size:20px" id="emailShow">...</code></p>
+    <input id="topupAmount" type="number" placeholder="Nhập số tiền (VD: 200000)" style="padding:14px;width:100%;border-radius:12px;background:#000;color:#fff;border:1px solid #333;margin:10px 0">
+    <button class="btn" id="topupBtn">Tôi đã chuyển tiền</button>
   </div>
 
   <div class="card" id="history" style="display:none">
     <h2>Lịch sử đơn hàng</h2>
-    <table width="100%"><thead><tr><th>Mã đơn</th><th>Sản phẩm</th><th>Giá</th><th>Seri</th><th>Trạng thái</th><th>Thời gian</th></tr></thead><tbody id="tbody"></tbody></table>
+    <table width="100%" style="text-align:center"><thead style="background:#222"><tr><th>Mã</th><th>Sản phẩm</th><th>Giá</th><th>Seri</th><th>Trạng thái</th><th>Thời gian</th></tr></thead><tbody id="tbody"></tbody></table>
   </div>
 </div>
 
 <button class="backtop" onclick="scrollTo(0,0)">Up</button>
 
-<a href="https://t.me/dung_tool_wallet" target="_blank" class="telegram-btn" title="Liên hệ Telegram">
+<a href="https://t.me/dung_tool_wallet" target="_blank" class="telegram-btn" title="Telegram">
   <svg viewBox="0 0 240.83 240.83" width="36" height="36" fill="#fff" xmlns="http://www.w3.org/2000/svg">
-    <path d="M57.65 184.28c-12.48 0-4.03-9.05-4.03-9.05l120.35-74.03c8.06-5.02 8.06-3.35 8.06-3.35l-124.38-74.03s-16.51-8.06-16.51 8.06c0 8.06 6.04 36.24 12.08 67.99l18.12 60.94s1.01 12.08 12.08 12.08c12.08 0 25.16-13.09 25.16-13.09l36.24-24.16 66.98 49.86c15.1 8.06 25.16 4.03 25.16 4.03l18.12-153.92s18.12-18.12 0-25.16c-12.08-5.02-36.24 20.14-36.24 20.14l-145.51 93.19c-12.08 6.04-25.16 9.05-25.16 9.05z"/>
+    <path d="M57.65 184.28c-12.48 0-4.03-9.05-4.03-9.05l120.35-74.03c8.06-5.02 8.06-3.35 8.06-3.35l-124.38-74.03s-16.51-8.06-16.51 8.06c0 8.06 6.04  가족36.24 12.08 67.99l18.12 60.94s1.01 12.08 12.08 12.08c12.08 0 25.16-13.09 25.16-13.09l36.24-24.16 66.98 49.86c15.1 8.06 25.16 4.03 25.16 4.03l18.12-153.92s18.12-18.12 0-25.16c-12.08-5.02-36.24 20.14-36.24 20.14l-145.51 93.19c-12.08 6.04-25.16 9.05-25.16 9.05z"/>
   </svg>
 </a>
 
-<div id="modalRoot" class="modal-backdrop">
-  <div class="modal" id="modalInner"></div>
-</div>
+<div id="modalRoot" class="modal-backdrop"><div class="modal" id="modalInner"></div></div>
+
+<audio id="notiSound" src="https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3" preload="auto"></audio>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+  import { getDatabase, ref, set, push, onValue, onChildAdded, runTransaction } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-  const firebaseConfig = {
+  const app = initializeApp({
     apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4",
     authDomain: "mokhoacloud.firebaseapp.com",
     databaseURL: "https://mokhoacloud-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -101,107 +98,91 @@
     storageBucket: "mokhoacloud.firebasestorage.app",
     messagingSenderId: "1013749304224",
     appId: "1:1013749304224:web:2a02b904c17c0aaf7c32c5"
-  };
-
-  const app = initializeApp(firebaseConfig);
+  });
   const db = getDatabase(app);
 
   if (!localStorage.getItem('userEmail')) location.href = 'index.html';
   document.getElementById('loader').remove();
 
   const $ = s => document.querySelector(s);
+  const sound = $('#notiSound');
   let currentUser = null;
 
-  const defaultProducts = {
-    "p1": { name: "Nothing PRO Bypass iPhone 11 → 17 Pro Max", price: 120000, desc: "iOS 18.6–26.1 • Full iCloud, Notification, FaceTime • Windows Tool" },
-    "p2": { name: "HFZ Activator A12+ Premium Bypass", price: 120000, desc: "All iPhone/iPad • Full Notification, FaceTime • Windows" },
-    "p3": { name: "iRemove Tool A12+ Instant API", price: 160000, desc: "iOS 18.6–26.1 • Mac & Win • Tốc độ Instant" },
-    "p4": { name: "Mina A12–M4 Bypass No Signal", price: 210000, desc: "iOS 18.6–26.0.1 • All iPhone/iPad A12–M4" },
-    "p5": { name: "FRPFILE Activator A12+ Hello Screen", price: 90000, desc: "iPhone XR–17 Pro Max & iPad A12–M3 • Full iCloud" }
-  };
+  const defaultProducts = {p1:{name:"Nothing PRO Bypass iPhone 11 → 17 Pro Max",price:120000,desc:"iOS 18.6–26.1 • Full thông báo • Win"},p2:{name:"HFZ Activator A12+ Premium",price:120000,desc:"All iDevice • Full Notification"},p3:{name:"iRemove Tool A12+ Instant",price:160000,desc:"Mac & Win • Instant"},p4:{name:"Mina A12–M4 No Signal",price:210000,desc:"All iPhone/iPad A12–M4"},p5:{name:"FRPFILE Hello Screen",price:90000,desc:"XR–17 Pro Max • Full iCloud"}};
 
-  // Tự động tạo 5 sp cũ nếu chưa có
-  onValue(ref(db, 'products'), snap => {
-    let data = snap.val();
-    if (!data || Object.keys(data).length === 0) {
-      set(ref(db, 'products'), defaultProducts);
-      data = defaultProducts;
-    }
-    $('#products').innerHTML = Object.values(data).map(p => `
-      <div class="product">
-        <h3>${p.name}</h3>
-        <p>${p.desc}</p>
-        <div class="price">${p.price.toLocaleString()}₫</div>
-        <button class="btn btn-buy" onclick="buy('${p.name.replace(/'/g, "\\'")}', ${p.price})">MUA NGAY</button>
-      </div>
-    `).join('');
-  });
-
-  // Load user
-  onValue(ref(db, 'users/' + btoa(localStorage.getItem('userEmail'))), snap => {
-    if (snap.exists()) {
-      currentUser = { ...snap.val(), email: localStorage.getItem('userEmail') };
-      $('#status').textContent = currentUser.email + (currentUser.email === '998822jj' ? ' (Admin)' : '');
-      $('#status').style.color = currentUser.email === '998822jj' ? '#ff0066' : '#00ff9d';
-      $('#adminLink').style.display = currentUser.email === '998822jj' ? 'inline' : 'none';
+  // Load user + realtime balance
+  const userRef = ref(db, 'users/' + btoa(localStorage.getItem('userEmail')));
+  onValue(userRef, s => {
+    if (s.exists()) {
+      currentUser = { ...s.val(), email: localStorage.getItem('userEmail') };
+      $('#status').textContent = currentUser.email + (currentUser.email==='998822jj'?' (Admin)':'');
+      $('#status').style.color = currentUser.email==='998822jj'?'#ff0066':'#00ff9d';
+      $('#adminLink').style.display = currentUser.email==='998822jj'?'inline':'none';
       $('#emailShow').textContent = currentUser.email;
-      $('#topupBtn').disabled = false;
-      $('#balance').textContent = (currentUser.balance || 0).toLocaleString();
+      $('#balance').textContent = (currentUser.balance||0).toLocaleString();
       renderHistory();
     }
   });
 
-  function renderHistory() {
-    if (!currentUser?.orders || Object.keys(currentUser.orders).length === 0) return;
-    $('#history').style.display = 'block';
-    $('#tbody').innerHTML = Object.values(currentUser.orders).reverse().map(o => `
-      <tr>
-        <td><code class="order-code" onclick="navigator.clipboard.writeText('${o.id}');alert('Đã copy!')">${o.id}</code></td>
-        <td>${o.product}</td>
-        <td>${o.price.toLocaleString()}</td>
-        <td><code>${o.seri||'-'}</code></td>
-        <td style="color:${o.status==='success'?'#00ff9d':o.status==='refunded'?'#ff6b6b':'#ffaa00'}">
-          ${o.status==='success'?'DONE':o.status==='refunded'?'HOÀN':'PENDING'}
-        </td>
-        <td>${o.date}</td>
-      </tr>
+  // Load + tạo 5 sản phẩm cũ
+  onValue(ref(db,'products'), s => {
+    let p = s.val() || {};
+    if (Object.keys(p).length===0) { set(ref(db,'products'), defaultProducts); p = defaultProducts; }
+    $('#products').innerHTML = Object.values(p).map(x=>`
+      <div class="product"><h3>${x.name}</h3><p>${x.desc}</p><div class="price">${x.price.toLocaleString()}₫</div>
+      <button class="btn btn-buy" onclick="buy('${x.name.replace(/'/g,"\\'")}',${x.price})">MUA NGAY</button></div>
     `).join('');
-  }
+  });
 
-  window.buy = (name, price) => {
-    if ((currentUser?.balance || 0) < price) return alert('Không đủ tiền!');
-    $('#modalInner').innerHTML = `
-      <h3 style="color:#00ff9d">Mua: ${name}</h3>
-      <input id="seri" placeholder="Nhập Serial / IMEI" style="width:100%;padding:14px;margin:12px 0;border-radius:12px;background:#000;color:#fff">
-      <button class="btn" onclick="confirmBuy('${name.replace(/'/g,"\\'")}', ${price})">GỬI ĐƠN</button>
-      <button class="btn" style="background:#666;margin-left:8px" onclick="closeModal()">Hủy</button>
-    `;
-    $('#modalRoot').style.display = 'flex';
-  };
-
-  window.confirmBuy = async (name, price) => {
-    const seri = $('#seri').value.trim();
-    if (!seri) return alert('Nhập Serial/IMEI!');
-    const id = Array(12).fill().map(()=> 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]).join('');
-    await set(ref(db, 'pendingOrders/' + id), { orderId: id, email: currentUser.email, product: name, price, seri, date: new Date().toLocaleString('vi-VN') });
-    await set(ref(db, 'users/' + btoa(currentUser.email) + '/balance'), (currentUser.balance || 0) - price);
-    await push(ref(db, 'users/' + btoa(currentUser.email) + '/orders'), { id, product: name, price, seri, status: 'pending', date: new Date().toLocaleString('vi-VN') });
-    alert(`ĐÃ GỬI ĐƠN!\nMã đơn: ${id}\nLưu lại nhé!`);
-    closeModal();
-  };
-
-  window.closeModal = () => $('#modalRoot').style.display = 'none';
-
+  // NẠP TIỀN – ADMIN NHẬN THÔNG BÁO REALTIME
   $('#topupBtn').onclick = async () => {
     const amount = parseInt($('#topupAmount').value);
-    if (!amount || amount < 10000) return alert('Tối thiểu 10.000đ');
-    const id = 'TP' + Date.now();
-    await set(ref(db, 'pendingTopups/' + id), { id, email: currentUser.email, amount, date: new Date().toLocaleString('vi-VN') });
-    alert('Đã gửi yêu cầu nạp tiền!');
+    if (!amount || amount < 10000) return alert('Tối thiểu 10.000₫');
+    const id = 'NAP_'+Date.now();
+    await set(ref(db, 'pendingTopups/'+id), {
+      id, email: currentUser.email, amount,
+      date: new Date().toLocaleString('vi-VN'),
+      status: 'pending'
+    });
+    alert('ĐÃ GỬI YÊU CẦU NẠP!\nAdmin sẽ duyệt ngay!');
     $('#topupAmount').value = '';
   };
 
-  $('#authBtn').onclick = () => confirm('Đăng xuất?') && (localStorage.removeItem('userEmail'), location.href = 'index.html');
+  window.buy = (n,p) => {
+    if ((currentUser?.balance||0) < p) return alert('Không đủ tiền!');
+    $('#modalInner').innerHTML = `<h3 style="color:#00ff9d">Mua: ${n}</h3>
+      <input id="seri" placeholder="Serial / IMEI" style="width:100%;padding:14px;margin:12px 0;border-radius:12px;background:#000;color:#fff">
+      <button class="btn" onclick="ok('${n}',${p})">GỬI ĐƠN</button>
+      <button class="btn" style="background:#666;margin-left:8px" onclick="$('#modalRoot').style.display='none'">Hủy</button>`;
+    $('#modalRoot').style.display='flex';
+  };
+
+  window.ok = async (n,p) => {
+    const seri = $('#seri').value.trim();
+    if (!seri) return alert('Nhập Serial!');
+    const id = Array(12).fill().map(()=> 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]).join('');
+    await set(ref(db,'pendingOrders/'+id), {orderId:id,email:currentUser.email,product:n,price:p,seri,date:new Date().toLocaleString('vi-VN')});
+    await runTransaction(ref(db, 'users/'+btoa(currentUser.email)+'/balance'), v => (v||0)-p);
+    await push(ref(db, 'users/'+btoa(currentUser.email)+'/orders'), {id,product:n,price:p,seri,status:'pending',date:new Date().toLocaleString('vi-VN')});
+    alert('ĐÃ GỬI ĐƠN!\nMã đơn: '+id);
+    $('#modalRoot').style.display='none';
+  };
+
+  function renderHistory() {
+    if (!currentUser?.orders) return;
+    const orders = Object.values(currentUser.orders).reverse();
+    if (orders.length>0) {
+      $('#history').style.display = 'block';
+      $('#tbody').innerHTML = orders.map(o=>`
+        <tr><td><code onclick="navigator.clipboard.writeText('${o.id}');alert('Copied')">${o.id}</code></td>
+        <td>${o.product}</td><td>${o.price.toLocaleString()}</td><td><code>${o.seri||'-'}</code></td>
+        <td style="color:${o.status==='success'?'#00ff9d':o.status==='refunded'?'#ff6b6b':'#ffaa00'}">${o.status==='success'?'DONE':o.status==='refunded'?'HOÀN':'PENDING'}</td>
+        <td>${o.date}</td></tr>
+      `).join('');
+    }
+  }
+
+  $('#authBtn').onclick = () => confirm('Đăng xuất?') && (localStorage.removeItem('userEmail'), location.href='index.html');
 </script>
 </body>
 </html>
