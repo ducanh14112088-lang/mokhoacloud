@@ -29,7 +29,7 @@
     .backtop{position:fixed;bottom:20px;right:20px;background:#00ff9d;color:#000;padding:15px 18px;border:none;border-radius:50%;font-size:24px;box-shadow:0 4px 20px #00ff9d88;z-index:99;cursor:pointer}
     .telegram-btn{position:fixed;bottom:20px;left:20px;background:#0088cc;color:white;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px #0088cc88;z-index:999}
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;z-index:999}
-    .modal{max-width:500px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri)}
+    .modal{max-width:500px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri);text-align:center}
   </style>
 </head>
 <body>
@@ -41,7 +41,7 @@
   <nav>
     <a href="index.html">Trang chủ</a>
     <a href="dashboard.html">Cửa hàng</a>
-    <a href="admin.html" id="adminLink" style="display:none;color:#ff0066;font-weight:700">ADMIN PANEL</a>
+    <a href="admin.html" id="adminLink" style="display:none;color:#ff0066;font-weight:700;background:#300;padding:8px 16px;border-radius:12px">ADMIN PANEL</a>
     <span id="status">Chưa đăng nhập</span>
     <button class="btn" id="authBtn">Đăng xuất</button>
   </nav>
@@ -89,11 +89,9 @@
   <div class="modal" id="modalInner"></div>
 </div>
 
-
-</body>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+  import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAidLdO5tVK8CkwRdMY91hG-ulXiNEohl4",
@@ -108,16 +106,12 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Bắt buộc đăng nhập
   if (!localStorage.getItem('userEmail')) location.href = 'index.html';
-
-  // Tắt loading ngay
-  document.getElementById('loader')?.remove();
+  document.getElementById('loader').remove();
 
   const $ = s => document.querySelector(s);
   let currentUser = null;
 
-  // === 5 SẢN PHẨM CŨ – BẮT BUỘC PHẢI CÓ ===
   const defaultProducts = {
     "p1": { name: "Nothing PRO Bypass iPhone 11 → 17 Pro Max", price: 120000, desc: "iOS 18.6–26.1 • Full iCloud, Notification, FaceTime • Windows Tool" },
     "p2": { name: "HFZ Activator A12+ Premium Bypass", price: 120000, desc: "All iPhone/iPad • Full Notification, FaceTime • Windows" },
@@ -126,22 +120,14 @@
     "p5": { name: "FRPFILE Activator A12+ Hello Screen", price: 90000, desc: "iPhone XR–17 Pro Max & iPad A12–M3 • Full iCloud" }
   };
 
-  // QUAN TRỌNG NHẤT: KIỂM TRA VÀ TỰ ĐỘNG TẠO 5 SP
-  const productsRef = ref(db, 'products');
-  onValue(productsRef, (snap) => {
-    const data = snap.val();
+  // Tự động tạo 5 sp cũ nếu chưa có
+  onValue(ref(db, 'products'), snap => {
+    let data = snap.val();
     if (!data || Object.keys(data).length === 0) {
-      // TỰ ĐỘNG TẠO 5 SẢN PHẨM CŨ
-      set(productsRef, defaultProducts)
-        .then(() => console.log("ĐÃ TỰ ĐỘNG TẠO 5 SẢN PHẨM CŨ!"))
-        .catch(err => console.error("Lỗi tạo sản phẩm:", err));
+      set(ref(db, 'products'), defaultProducts);
+      data = defaultProducts;
     }
-    // Hiển thị sản phẩm (dù là mới tạo hay đã có)
-    renderProducts(data && Object.keys(data).length > 0 ? data : defaultProducts);
-  }, { onlyOnce: false });
-
-  function renderProducts(prods) {
-    $('#products').innerHTML = Object.values(prods).map(p => `
+    $('#products').innerHTML = Object.values(data).map(p => `
       <div class="product">
         <h3>${p.name}</h3>
         <p>${p.desc}</p>
@@ -149,9 +135,9 @@
         <button class="btn btn-buy" onclick="buy('${p.name.replace(/'/g, "\\'")}', ${p.price})">MUA NGAY</button>
       </div>
     `).join('');
-  }
+  });
 
-  // Load user (giữ nguyên các phần còn lại như trước)
+  // Load user
   onValue(ref(db, 'users/' + btoa(localStorage.getItem('userEmail'))), snap => {
     if (snap.exists()) {
       currentUser = { ...snap.val(), email: localStorage.getItem('userEmail') };
@@ -161,10 +147,61 @@
       $('#emailShow').textContent = currentUser.email;
       $('#topupBtn').disabled = false;
       $('#balance').textContent = (currentUser.balance || 0).toLocaleString();
+      renderHistory();
     }
   });
 
-  // Các hàm mua hàng, nạp tiền... giữ nguyên như cũ (bạn đã có rồi)
-  window.buy = () => alert('Chức năng mua hàng đang hoạt động bình thường!');
-  $('#authBtn').onclick = () => confirm('Đăng xuất?') && (localStorage.removeItem('userEmail'), location.href='index.html');
+  function renderHistory() {
+    if (!currentUser?.orders || Object.keys(currentUser.orders).length === 0) return;
+    $('#history').style.display = 'block';
+    $('#tbody').innerHTML = Object.values(currentUser.orders).reverse().map(o => `
+      <tr>
+        <td><code class="order-code" onclick="navigator.clipboard.writeText('${o.id}');alert('Đã copy!')">${o.id}</code></td>
+        <td>${o.product}</td>
+        <td>${o.price.toLocaleString()}</td>
+        <td><code>${o.seri||'-'}</code></td>
+        <td style="color:${o.status==='success'?'#00ff9d':o.status==='refunded'?'#ff6b6b':'#ffaa00'}">
+          ${o.status==='success'?'DONE':o.status==='refunded'?'HOÀN':'PENDING'}
+        </td>
+        <td>${o.date}</td>
+      </tr>
+    `).join('');
+  }
+
+  window.buy = (name, price) => {
+    if ((currentUser?.balance || 0) < price) return alert('Không đủ tiền!');
+    $('#modalInner').innerHTML = `
+      <h3 style="color:#00ff9d">Mua: ${name}</h3>
+      <input id="seri" placeholder="Nhập Serial / IMEI" style="width:100%;padding:14px;margin:12px 0;border-radius:12px;background:#000;color:#fff">
+      <button class="btn" onclick="confirmBuy('${name.replace(/'/g,"\\'")}', ${price})">GỬI ĐƠN</button>
+      <button class="btn" style="background:#666;margin-left:8px" onclick="closeModal()">Hủy</button>
+    `;
+    $('#modalRoot').style.display = 'flex';
+  };
+
+  window.confirmBuy = async (name, price) => {
+    const seri = $('#seri').value.trim();
+    if (!seri) return alert('Nhập Serial/IMEI!');
+    const id = Array(12).fill().map(()=> 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]).join('');
+    await set(ref(db, 'pendingOrders/' + id), { orderId: id, email: currentUser.email, product: name, price, seri, date: new Date().toLocaleString('vi-VN') });
+    await set(ref(db, 'users/' + btoa(currentUser.email) + '/balance'), (currentUser.balance || 0) - price);
+    await push(ref(db, 'users/' + btoa(currentUser.email) + '/orders'), { id, product: name, price, seri, status: 'pending', date: new Date().toLocaleString('vi-VN') });
+    alert(`ĐÃ GỬI ĐƠN!\nMã đơn: ${id}\nLưu lại nhé!`);
+    closeModal();
+  };
+
+  window.closeModal = () => $('#modalRoot').style.display = 'none';
+
+  $('#topupBtn').onclick = async () => {
+    const amount = parseInt($('#topupAmount').value);
+    if (!amount || amount < 10000) return alert('Tối thiểu 10.000đ');
+    const id = 'TP' + Date.now();
+    await set(ref(db, 'pendingTopups/' + id), { id, email: currentUser.email, amount, date: new Date().toLocaleString('vi-VN') });
+    alert('Đã gửi yêu cầu nạp tiền!');
+    $('#topupAmount').value = '';
+  };
+
+  $('#authBtn').onclick = () => confirm('Đăng xuất?') && (localStorage.removeItem('userEmail'), location.href = 'index.html');
 </script>
+</body>
+</html>
