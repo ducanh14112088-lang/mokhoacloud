@@ -24,8 +24,8 @@
     .modal{max-width:420px;width:90%;background:#111;padding:30px;border-radius:18px;border:2px solid var(--pri);text-align:center}
     input{width:100%;padding:14px;margin:10px 0;border-radius:12px;border:1px solid #333;background:#000;color:#fff;font-size:16px}
     .online-badge{background:#00ff9d;color:#000;padding:4px 12px;border-radius:20px;font-size:12px;animation:blink 2s infinite;font-weight:900}
-    .telegram-btn{position:fixed;bottom:20px;left:20px;background:#0088cc;color:white;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 4px 20px #0088cc88;z-index:999}
     @keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
+    .telegram-btn{position:fixed;bottom:20px;left:20px;background:#0088cc;color:white;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px #0088cc88;z-index:999}
   </style>
 </head>
 <body>
@@ -62,8 +62,14 @@
   </div>
 </div>
 
-<a href="https://t.me/dung_tool_wallet" target="_blank" class="telegram-btn">Telegram</a>
+<!-- Nút Telegram chỉ có logo -->
+<a href="https://t.me/dung_tool_wallet" target="_blank" class="telegram-btn" title="Liên hệ Telegram">
+  <svg viewBox="0 0 240.83 240.83" width="36" height="36" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+    <path d="M57.65 184.28c-12.48 0-4.03-9.05-4.03-9.05l120.35-74.03c8.06-5.02 8.06-3.35 8.06-3.35l-124.38-74.03s-16.51-8.06-16.51 8.06c0 8.06 6.04 36.24 12.08 67.99l18.12 60.94s1.01 12.08 12.08 12.08c12.08 0 25.16-13.09 25.16-13.09l36.24-24.16 66.98 49.86c15.1 8.06 25.16 4.03 25.16 4.03l18.12-153.92s18.12-18.12 0-25.16c-12.08-5.02-36.24 20.14-36.24 20.14l-145.51 93.19c-12.08 6.04-25.16 9.05-25.16 9.05z"/>
+  </svg>
+</a>
 
+<!-- Modal đăng nhập / đăng ký -->
 <div id="authModal" class="modal-backdrop">
   <div class="modal">
     <h2 style="color:#00ff9d">Đăng nhập / Đăng ký</h2>
@@ -99,78 +105,106 @@
 
   let currentUser = null;
 
-  async function hash(p){
+  async function hash(p) {
     const data = new TextEncoder().encode(p);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
   }
 
-  function updateUI(){
-    if(!currentUser){
-      $('#status').textContent = 'Chưa đăng nhập';
-      $('#noidung').textContent = 'Đăng nhập để xem';
+  function updateUI() {
+    if (!currentUser) {
+      document.getElementById('status').textContent = 'Chưa đăng nhập';
+      document.getElementById('noidung').textContent = 'Đăng nhập để xem';
     } else {
       const isAdmin = currentUser.email === '998822jj';
-      $('#status').textContent = currentUser.email + (isAdmin ? ' (Admin)' : '');
-      $('#status').style.color = isAdmin ? '#ff0066' : '#00ff9d';
-      $('#noidung').textContent = currentUser.email;
+      document.getElementById('status').textContent = currentUser.email + (isAdmin ? ' (Admin)' : '');
+      document.getElementById('status').style.color = isAdmin ? '#ff0066' : '#00ff9d';
+      document.getElementById('noidung').textContent = currentUser.email;
     }
-    $('#authBtn').textContent = currentUser ? 'Đăng xuất' : 'Đăng nhập';
+    document.getElementById('authBtn').textContent = currentUser ? 'Đăng xuất' : 'Đăng nhập';
   }
 
-  const $ = s => document.querySelector(s);
-  function closeAuth(){$('#authModal').style.display='none';}
+  function closeAuth() {
+    document.getElementById('authModal').style.display = 'none';
+  }
 
+  // Kiểm tra đã đăng nhập chưa
   const savedEmail = localStorage.getItem('userEmail');
-  if(savedEmail){
-    const userRef = ref(db,'users/'+btoa(savedEmail));
-    onValue(userRef,snap=>{if(snap.exists()){currentUser={...snap.val(),email:savedEmail};updateUI();}});
+  if (savedEmail) {
+    const userRef = ref(db, 'users/' + btoa(savedEmail));
+    onValue(userRef, (snap) => {
+      if (snap.exists()) {
+        currentUser = { ...snap.val(), email: savedEmail };
+        updateUI();
+      }
+    }, { onlyOnce: true });
   }
 
-  $('#authBtn').onclick = () => {
-    if(currentUser){
-      if(confirm('Đăng xuất?')){localStorage.removeItem('userEmail');currentUser=null;updateUI();}
+  document.getElementById('authBtn').onclick = () => {
+    if (currentUser) {
+      if (confirm('Đăng xuất?')) {
+        localStorage.removeItem('userEmail');
+        currentUser = null;
+        updateUI();
+      }
       return;
     }
-    $('#authModal').style.display='flex';
-    $('#pass2').style.display='none';
-    $('#btnSignup').style.display='inline-block';
-    $('#btnCompleteSignup').style.display='none';
-    $('#msg').textContent='';
+    document.getElementById('authModal').style.display = 'flex';
+    document.getElementById('pass2').style.display = 'none';
+    document.getElementById('btnSignup').style.display = 'inline-block';
+    document.getElementById('btnCompleteSignup').style.display = 'none';
+    document.getElementById('msg').textContent = '';
   };
 
-  $('#btnLogin').onclick = async () => {
-    const email = $('#email').value.trim();
-    const pass = $('#pass1').value;
-    const msg = $('#msg');
-    if(!email||!pass) return msg.textContent='Nhập đầy đủ';
-    const snap = await get(ref(db,'users/'+btoa(email)));
-    if(!snap.exists()) return msg.textContent='Email chưa đăng ký';
-    if(await hash(pass) !== snap.val().pass) return msg.textContent='Sai mật khẩu';
-    localStorage.setItem('userEmail',email);
-    currentUser = {...snap.val(),email};
-    updateUI(); closeAuth(); alert('Đăng nhập thành công!');
+  document.getElementById('btnLogin').onclick = async () => {
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('pass1').value;
+    const msg = document.getElementById('msg');
+    if (!email || !pass) return msg.textContent = 'Nhập đầy đủ';
+
+    const snap = await get(ref(db, 'users/' + btoa(email)));
+    if (!snap.exists()) return msg.textContent = 'Email chưa đăng ký';
+    if (await hash(pass) !== snap.val().pass) return msg.textContent = 'Sai mật khẩu';
+
+    localStorage.setItem('userEmail', email);
+    currentUser = { ...snap.val(), email };
+    updateUI();
+    closeAuth();
+    alert('Đăng nhập thành công!');
   };
 
-  $('#btnSignup').onclick = () => {
-    $('#pass2').style.display='block';
-    $('#btnSignup').style.display='none';
-    $('#btnCompleteSignup').style.display='inline-block';
+  document.getElementById('btnSignup').onclick = () => {
+    document.getElementById('pass2').style.display = 'block';
+    document.getElementById('btnSignup').style.display = 'none';
+    document.getElementById('btnCompleteSignup').style.display = 'inline-block';
   };
 
-  $('#btnCompleteSignup').onclick = async () => {
-    const email = $('#email').value.trim();
-    const p1 = $('#pass1').value, p2 = $('#pass2').value;
-    const msg = $('#msg');
-    if(p1!==p2) return msg.textContent='Mật khẩu không khớp';
-    if(p1.length<6) return msg.textContent='Mật khẩu ít nhất 6 ký tự';
-    if(await get(ref(db,'users/'+btoa(email))).then(s=>s.exists())) return msg.textContent='Email đã tồn tại';
+  document.getElementById('btnCompleteSignup').onclick = async () => {
+    const email = document.getElementById('email').value.trim();
+    const p1 = document.getElementById('pass1').value;
+    const p2 = document.getElementById('pass2').value;
+    const msg = document.getElementById('msg');
+
+    if (p1 !== p2) return msg.textContent = 'Mật khẩu không khớp';
+    if (p1.length < 6) return msg.textContent = 'Mật khẩu ít nhất 6 ký tự';
+
+    const exists = await get(ref(db, 'users/' + btoa(email)));
+    if (exists.exists()) return msg.textContent = 'Email đã tồn tại';
+
     const h = await hash(p1);
-    const newUser = {pass:h,balance:0,orders:{},isAdmin:email==='998822jj'};
-    await set(ref(db,'users/'+btoa(email)),newUser);
-    localStorage.setItem('userEmail',email);
-    currentUser = {...newUser,email};
-    updateUI(); closeAuth(); alert('Đăng ký thành công!');
+    const newUser = {
+      pass: h,
+      balance: 0,
+      orders: {},
+      isAdmin: email === '998822jj'
+    };
+
+    await set(ref(db, 'users/' + btoa(email)), newUser);
+    localStorage.setItem('userEmail', email);
+    currentUser = { ...newUser, email };
+    updateUI();
+    closeAuth();
+    alert('Đăng ký thành công! Chào mừng ' + (email === '998822jj' ? 'Admin' : 'thành viên mới') + '!');
   };
 
   updateUI();
